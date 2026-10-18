@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#130d26" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>SyncBloom — Gamified Couples Cycle &amp; Intimacy Sync</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0f0a1e;
+      --bg-card: #1a1230;
+      --bg-card-hover: #231840;
+      --her-primary: #ff4d94;
+      --her-secondary: #ff85b3;
+      --his-primary: #38bdf8;
+      --his-secondary: #818cf8;
+      --spark-gold: #fbbf24;
+      --spark-flame: #f97316;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 10%, #2a1448 0%, #110b22 50%, #090614 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .font-game {
+      font-family: 'Fredoka', 'Inter', sans-serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 10, 30, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(236, 72, 153, 0.6);
+    }
+    /* Gamified Card Styles */
+    .game-card {
+      background: linear-gradient(145deg, rgba(31, 21, 56, 0.92), rgba(20, 14, 38, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+    }
+    .game-card-her {
+      background: linear-gradient(145deg, rgba(46, 18, 52, 0.92), rgba(24, 13, 38, 0.96));
+      border: 1px solid rgba(244, 114, 182, 0.28);
+      box-shadow: 0 10px 28px -6px rgba(236, 72, 153, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+    .game-card-his {
+      background: linear-gradient(145deg, rgba(16, 30, 62, 0.92), rgba(15, 18, 42, 0.96));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow: 0 10px 28px -6px rgba(56, 189, 248, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+    .game-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+    .game-btn:active {
+      transform: translateY(2px) scale(0.97);
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+      50% { box-shadow: 0 0 28px rgba(251, 191, 36, 0.75); }
+    }
+    .animate-float {
+      animation: floatSlow 3.4s ease-in-out infinite;
+    }
+    .animate-glow {
+      animation: pulseGlow 2.4s ease-in-out infinite;
+    }
+    /* Custom Range Slider */
+    input[type="range"].drive-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3b82f6 0%, #ec4899 50%, #f97316 80%, #ef4444 100%);
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    input[type="range"].drive-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #f97316;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.85);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"].drive-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+    .phone-frame {
+      border: 3px solid rgba(255, 255, 255, 0.14);
+      border-radius: 28px;
+      background: rgba(11, 7, 23, 0.88);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+    }
+  </style>
+</head>
+<body class="selection:bg-pink-500 selection:text-white pb-16">
+
+  <!-- TOP GAMIFIED HUD & NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-[#120b24]/90 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand + Couple XP Level -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-amber-400 p-0.5 shadow-lg shadow-pink-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-[#140c29] rounded-[14px] flex items-center justify-center text-xl">
+            🌸
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-game text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-sky-400 bg-clip-text text-transparent">
+              SyncBloom
+            </h1>
+            <span id="syncStatusPill" onclick="openModal('syncModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition">
+              <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="syncStatusText">Room: LUNA-42</span>
+            </span>
+          </div>
+          <!-- Couple Level & XP Progress -->
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="coupleLevelBadge" class="text-[11px] font-bold text-amber-300 font-game">LVL 1 COUPLE</span>
+            <div class="w-24 sm:w-32 h-2 rounded-full bg-white/10 overflow-hidden">
+              <div id="xpProgressBar" class="h-full bg-gradient-to-r from-pink-500 via-amber-400 to-emerald-400 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <span id="xpTextLabel" class="text-[10px] text-slate-300 font-medium">0 / 500 XP</span>
+            <span id="streakBadge" class="text-[11px] font-bold text-orange-400 ml-1" title="Daily Validation Streak">🔥 0d</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode Switcher: Her Phone | His Phone | Dual Phone Split -->
+      <div class="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10">
+        <button id="modeBtnHer" onclick="setRoleView('her')" class="game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/30">
+          <span>👩</span>
+          <span>Her UI</span>
+        </button>
+        <button id="modeBtnHis" onclick="setRoleView('his')" class="game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition text-slate-300 hover:text-white">
+          <span>👨</span>
+          <span>His UI</span>
+          <span id="hisUnreadBadge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-slate-950 font-extrabold">!</span>
+        </button>
+        <button id="modeBtnSplit" onclick="setRoleView('split')" class="game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition text-slate-300 hover:text-white" title="See both phones side-by-side to test live sync">
+          <span>📱📱</span>
+          <span class="hidden md:inline">2-Phone Live View</span>
+          <span class="md:hidden">Dual</span>
+        </button>
+      </div>
+
+      <!-- Right Actions: Couple Login/Reset, Two-Phone Pairing, Android Install, Audio Toggle -->
+      <div class="flex items-center gap-1.5">
+        <button id="btnOpenProfileModal" onclick="openModal('syncModal')" class="game-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 border border-pink-400/30 flex items-center gap-1.5" title="Couple Login, Cycle Setup & Data Reset">
+          <span>👤</span>
+          <span class="hidden sm:inline">Couple Setup / Reset</span>
+        </button>
+        <button id="btnOpenSyncModal" onclick="openModal('syncModal')" class="game-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
+          <span>🔗</span>
+          <span class="hidden sm:inline">Pair 2 Phones</span>
+        </button>
+        <button id="btnOpenInstallModal" onclick="openModal('installModal')" class="game-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/30 flex items-center gap-1.5">
+          <span>📲</span>
+          <span class="hidden sm:inline">Android Install</span>
+        </button>
+        <button id="btnSoundToggle" onclick="toggleSound()" class="game-btn w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-sm" title="Toggle Game Sound Effects" aria-label="Toggle Sound">
+          🔊
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CYCLE DAY SIMULATOR / SCRUBBER BAR (Allows testing predictions across all 28 days + Today) -->
+  <div class="bg-[#181030]/80 border-b border-white/10 py-2 px-3 sm:px-6">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 font-semibold border border-pink-500/30">
+          🗓️ Cycle Engine
+        </span>
+        <span id="globalCycleSummary" class="text-slate-200 font-medium">
+          Day 14 of 28 • Ovulatory Phase (Peak Glow)
+        </span>
+        <span id="globalValidationBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+          🔮 Auto-Predicted (Needs Her Daily Check-In)
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button id="btnPrevDay" onclick="shiftCycleDay(-1)" class="game-btn px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold">
+          ◀ Prev Day
+        </button>
+        <select id="topCycleDaySelect" onchange="setCycleDay(this.value)" aria-label="Select Cycle Day" class="bg-[#241744] hover:bg-[#2d1d54] text-pink-200 font-bold border border-pink-400/40 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-pink-400 cursor-pointer">
+          <option value="1">Day 1</option>
+        </select>
+        <button id="btnNextDay" onclick="shiftCycleDay(1)" class="game-btn px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold">
+          Next Day ▶
+        </button>
+        <button id="btnJumpPhase1" onclick="setCycleDay(2)" class="game-btn px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-200" title="Switch to Menstrual Phase (Day 2)">
+          🩸 Day 2
+        </button>
+        <button id="btnJumpPhase2" onclick="setCycleDay(9)" class="game-btn px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-200" title="Switch to Follicular Phase (Day 9)">
+          🌱 Day 9
+        </button>
+        <button id="btnJumpPhase3" onclick="setCycleDay(14)" class="game-btn px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200" title="Switch to Ovulatory Phase (Day 14)">
+          ✨ Day 14
+        </button>
+        <button id="btnJumpPhase4" onclick="setCycleDay(23)" class="game-btn px-2 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200" title="Switch to Luteal Phase (Day 23)">
+          🌙 Day 23
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE CONTAINER -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 pt-5">
+
+    <!-- MUTUAL SPARK CELEBRATION BANNER (Appears when both partners have High Drive or accept a Desire Quest) -->
+    <div id="mutualSparkBanner" class="hidden mb-5 p-4 rounded-3xl bg-gradient-to-r from-rose-600/90 via-amber-500/90 to-pink-600/90 border border-amber-300/60 shadow-xl shadow-rose-500/30 text-white">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="text-3xl animate-bounce">🔥💞</div>
+          <div>
+            <div class="font-game text-base sm:text-lg font-bold flex items-center gap-2">
+              <span id="mutualSparkTitle">MUTUAL SUPERNOVA SPARK UNLOCKED!</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-black/30 font-extrabold text-amber-200">+100 XP</span>
+            </div>
+            <p id="mutualSparkDesc" class="text-xs sm:text-sm text-white/95">
+              Both of you are in high-drive mode right now! Check your active Intimate Request card below.
+            </p>
+          </div>
+        </div>
+        <button id="btnDismissSparkBanner" onclick="dismissSparkBanner()" class="game-btn px-3 py-1.5 rounded-xl bg-black/25 hover:bg-black/40 text-xs font-bold">
+          Awesome ✨
+        </button>
+      </div>
+    </div>
+
+    <!-- RESPONSIVE GRID FOR HER PHONE & HIS PHONE -->
+    <div id="phonesGrid" class="grid grid-cols-1 gap-6 items-start">
+
+      <!-- ===================================================================== -->
+      <!-- PHONE 1: GIRLFRIEND UI ("HER VIEW")                                   -->
+      <!-- ===================================================================== -->
+      <section id="herPhoneContainer" class="phone-frame p-4 sm:p-5 transition-all">
+        <!-- Phone Status Bar Header -->
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-pink-500/20">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-xl shadow-md shadow-pink-500/30">
+              👩
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="herNameDisplay" class="font-game font-bold text-base text-pink-200">Mia's Sanctuary</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-400/30">HER PHONE</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Predictions pre-filled daily • Validate in 1 tap to sync</p>
+            </div>
+          </div>
+          <!-- Her Sub-Navigation Tabs -->
+          <div class="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
+            <button id="herTabBtnCycle" onclick="setHerSubTab('cycle')" class="game-btn px-2.5 py-1 rounded-lg font-semibold bg-pink-500 text-white">
+              🌸 Cycle &amp; Daily
+            </button>
+            <button id="herTabBtnSpark" onclick="setHerSubTab('spark')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white flex items-center gap-1">
+              <span>🔥 Spark Sync</span>
+              <span id="herSparkDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- HER SUB-VIEW 1: CYCLE PREDICTION & DAILY VALIDATION -->
+        <div id="herViewCycle" class="space-y-4">
+          <!-- Cycle Mascot & Phase Hero Card -->
+          <div class="game-card-her rounded-3xl p-4 sm:p-5 relative overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1.5">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-pink-500/25 text-pink-200 border border-pink-400/40">
+                  <span id="herPhaseEmoji">✨</span>
+                  <span id="herPhaseName">Ovulatory Phase • Day 14</span>
+                </div>
+                <h2 id="herPhaseHeadline" class="font-game text-xl sm:text-2xl font-bold text-white">
+                  Magnetic Glow &amp; Peak Energy
+                </h2>
+                <p id="herPhaseDescription" class="text-xs sm:text-sm text-pink-100/85 leading-relaxed">
+                  Estrogen and LH are peaking today! Our engine predicts high social energy, elevated natural sex drive, and cravings for fresh or sweet treats.
+                </p>
+              </div>
+              <!-- Animated Cycle Ring SVG -->
+              <div class="flex-shrink-0 flex flex-col items-center justify-center bg-black/25 rounded-2xl p-3 border border-pink-400/20 min-w-[125px]">
+                <div class="relative w-20 h-20 flex items-center justify-center">
+                  <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.1)" stroke-width="7" fill="none" />
+                    <circle id="herCycleRingArc" cx="40" cy="40" r="32" stroke="url(#herGrad)" stroke-width="7" stroke-linecap="round" fill="none" stroke-dasharray="201" stroke-dashoffset="100" />
+                    <defs>
+                      <linearGradient id="herGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#f472b6" />
+                        <stop offset="100%" stop-color="#fbbf24" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span id="herRingDayNum" class="font-game text-lg font-extrabold text-white">D14</span>
+                    <span id="herRingFertility" class="text-[9px] uppercase tracking-wider font-bold text-amber-300">Peak Fertility</span>
+                  </div>
+                </div>
+                <span id="herNextPeriodCountdown" class="text-[11px] text-pink-200/80 mt-1 font-medium">Next period in 14d</span>
+              </div>
+            </div>
+
+            <!-- MANUAL CYCLE DAY & PERIOD START CONTROLLER (Direct anytime modification) -->
+            <div class="mt-4 pt-3 border-t border-pink-400/25 bg-black/30 rounded-2xl p-3 space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm">🗓️</span>
+                  <span class="text-xs font-bold text-pink-200">Change Your Cycle Day Anytime</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button id="herCardPrevDayBtn" onclick="shiftCycleDay(-1)" class="game-btn px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-bold text-white">
+                    ◀ -1d
+                  </button>
+                  <select id="herCycleDaySelect" onchange="setCycleDay(this.value)" aria-label="Her Cycle Day Selector" class="bg-pink-500/25 hover:bg-pink-500/35 text-white font-extrabold border border-pink-400/50 rounded-xl px-3 py-1 text-xs focus:outline-none focus:border-pink-300 cursor-pointer">
+                    <option value="1">Day 1 — Menstrual 🩸</option>
+                  </select>
+                  <button id="herCardNextDayBtn" onclick="shiftCycleDay(1)" class="game-btn px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-bold text-white">
+                    +1d ▶
+                  </button>
+                </div>
+              </div>
+
+              <!-- Interactive Day Scrubber Slider (Days 1 to Cycle Length) -->
+              <div>
+                <input id="herCycleDaySlider" type="range" min="1" max="28" value="1" oninput="setCycleDay(this.value)" class="drive-slider" />
+                <div class="flex justify-between text-[10px] text-pink-200/80 mt-1 font-medium">
+                  <span>🩸 D1–5 Menstrual</span>
+                  <span>🌱 D6–12 Follicular</span>
+                  <span>✨ D13–16 Ovulatory</span>
+                  <span>🌙 D17–28 Luteal</span>
+                </div>
+              </div>
+
+              <!-- Quick Period Start Button + Last Period Date Calculator -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/10 text-[11px]">
+                <button id="herBtnPeriodStartedToday" onclick="setCycleDay(1)" class="game-btn px-2.5 py-1 rounded-xl bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-rose-200 font-bold">
+                  🩸 Period Started Today (Set Day 1)
+                </button>
+                <div class="flex items-center gap-1.5">
+                  <label for="herLastPeriodDateInput" class="text-slate-300 font-medium">Or Last Period Start:</label>
+                  <input id="herLastPeriodDateInput" type="date" onchange="setCycleDayFromStartDate(this.value)" class="bg-black/40 border border-white/20 rounded-xl px-2 py-1 text-[11px] text-white focus:outline-none focus:border-pink-400" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Hormone Mini-Bars -->
+            <div class="grid grid-cols-3 gap-2.5 mt-4 pt-3 border-t border-white/10">
+              <div class="bg-black/20 rounded-xl p-2.5">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-pink-200 font-medium">Estrogen</span>
+                  <span id="herEstrogenVal" class="font-bold text-pink-300">95%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div id="herEstrogenBar" class="h-full bg-pink-400 rounded-full transition-all duration-300" style="width:95%"></div>
+                </div>
+              </div>
+              <div class="bg-black/20 rounded-xl p-2.5">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-purple-200 font-medium">Progesterone</span>
+                  <span id="herProgVal" class="font-bold text-purple-300">20%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div id="herProgBar" class="h-full bg-purple-400 rounded-full transition-all duration-300" style="width:20%"></div>
+                </div>
+              </div>
+              <div class="bg-black/20 rounded-xl p-2.5">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-amber-200 font-medium">Energy Forecast</span>
+                  <span id="herEnergyVal" class="font-bold text-amber-300">90%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div id="herEnergyBar" class="h-full bg-amber-400 rounded-full transition-all duration-300" style="width:90%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DAILY PREDICTION VALIDATION CARD (Core Requirement #1) -->
+          <div class="game-card rounded-3xl p-4 sm:p-5 border-2 border-pink-500/40">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🔮</span>
+                  <h3 class="font-game text-base sm:text-lg font-bold text-white">
+                    Today's Smart Predictions
+                  </h3>
+                  <span id="herValidationPill" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                    Needs Your Validation
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300 mt-0.5">
+                  We pre-selected today's mood, cravings &amp; symptoms from your cycle phase. Tap to tweak or validate in 1 tap!
+                </p>
+              </div>
+              <button id="btnResetToPredicted" onclick="resetDayToPredictions()" class="game-btn px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10">
+                🔄 Reset to Auto-Predict
+              </button>
+            </div>
+
+            <!-- 1. Mood & Vibe Selector -->
+            <div class="mb-4">
+              <label class="block text-xs font-bold uppercase tracking-wider text-pink-300 mb-2">
+                1. Predicted Mood &amp; Energy (Tap to adjust)
+              </label>
+              <div id="herMoodChipsContainer" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- 2. Cravings Radar Selector -->
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-amber-300">
+                  2. Cravings Radar 🍫 (Synced straight to his phone)
+                </label>
+                <button id="btnClearHerCravings" onclick="clearAllCravings()" class="game-btn text-[11px] text-rose-300 hover:text-rose-200 underline font-semibold">
+                  Clear All Cravings
+                </button>
+              </div>
+              <div id="herCravingChipsContainer" class="flex flex-wrap gap-1.5"></div>
+              <!-- Custom Craving Quick Input -->
+              <div class="mt-2 flex gap-2">
+                <input id="customCravingInput" type="text" placeholder="Craving something specific? (e.g. Matcha Mochi, Spicy Pho)..." class="flex-1 bg-black/30 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-pink-400" />
+                <button id="btnAddCustomCraving" onclick="addCustomCraving()" class="game-btn px-3 py-1.5 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 border border-pink-400/40 text-xs font-bold text-pink-200">
+                  + Add Craving
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Symptoms & Comfort Needs -->
+            <div class="mb-4">
+              <label class="block text-xs font-bold uppercase tracking-wider text-purple-300 mb-2">
+                3. Body Signals &amp; How He Can Support You Today
+              </label>
+              <div id="herSymptomChipsContainer" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- BIG GAMIFIED DAILY VALIDATE BUTTON -->
+            <div class="pt-2">
+              <button id="btnValidateDaily" onclick="validateTodayPredictions()" class="game-btn w-full py-3.5 px-5 rounded-2xl font-game text-base sm:text-lg font-bold text-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-400 hover:to-amber-400 shadow-lg shadow-pink-500/30 flex items-center justify-center gap-2">
+                <span id="validateBtnIcon">✅</span>
+                <span id="validateBtnText">Validate Today's Predictions &amp; Auto-Sync (+50 XP)</span>
+              </button>
+              <p id="herLastValidatedSubtext" class="text-center text-[11px] text-slate-400 mt-1.5">
+                His phone already sees your automatic phase forecast, and validating locks in your exact cravings &amp; quests!
+              </p>
+            </div>
+          </div>
+
+          <!-- Status of Boyfriend's Care Quests on Her Phone -->
+          <div class="game-card rounded-3xl p-4">
+            <div class="flex items-center justify-between mb-2.5">
+              <h3 class="font-game text-sm font-bold text-sky-300 flex items-center gap-1.5">
+                <span>🛡️</span>
+                <span>His Active Partner Quests for You</span>
+              </h3>
+              <span id="herBoyfriendQuestProgress" class="text-xs font-bold text-emerald-300">0/3 Done</span>
+            </div>
+            <div id="herPartnerQuestsPreview" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+
+        <!-- HER SUB-VIEW 2: TWO-WAY SPARK & DESIRE SYNC -->
+        <div id="herViewSpark" class="space-y-4 hidden">
+          <!-- Live Two-Way Libido / Sex Drive Meters -->
+          <div class="game-card-her rounded-3xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
+                  <span>🔥</span>
+                  <span>Live Two-Way Drive Radar</span>
+                </h3>
+                <p class="text-xs text-pink-200/80">Slide your current sex drive — updates his phone live</p>
+              </div>
+              <div id="herSparkSynergyBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                ⚡ 82% Couple Spark
+              </div>
+            </div>
+
+            <!-- Her Drive Slider -->
+            <div class="bg-black/30 rounded-2xl p-3.5 border border-pink-500/30 mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-pink-300">👩 Your Current Drive</span>
+                <span id="herDriveStatusLabel" class="text-xs font-extrabold text-amber-300">🔥 80% — High Drive / Frisky</span>
+              </div>
+              <input id="herDriveSlider" type="range" min="0" max="100" value="80" oninput="updateDriveLevel('her', this.value)" class="drive-slider" />
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                <span>💤 Cuddle Only</span>
+                <span>🌸 Flirty</span>
+                <span>🔥 High Drive</span>
+                <span>🌋 Need You Now</span>
+              </div>
+            </div>
+
+            <!-- His Live Drive Readout on Her Phone -->
+            <div class="bg-black/30 rounded-2xl p-3.5 border border-sky-500/30">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-sky-300">👨 His Live Drive Right Now</span>
+                <span id="herViewOfHisDriveLabel" class="text-xs font-extrabold text-sky-200">🔥 78% — High Drive</span>
+              </div>
+              <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                <div id="herViewOfHisDriveBar" class="h-full bg-gradient-to-r from-sky-400 via-indigo-400 to-orange-500 transition-all duration-300" style="width: 78%"></div>
+              </div>
+              <p id="herViewOfHisMoodNote" class="text-[11px] text-slate-300 mt-1.5">
+                💬 His status: "Ready for date night &amp; quality time tonight"
+              </p>
+            </div>
+          </div>
+
+          <!-- Incoming / Active Intimate Requests Between Partners -->
+          <div class="game-card rounded-3xl p-4 sm:p-5 border border-amber-400/30">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-game text-base font-bold text-amber-300 flex items-center gap-1.5">
+                <span>💌</span>
+                <span>Live Intimate Requests (Two-Way)</span>
+              </h3>
+              <button id="btnClearAllRequestsHer" onclick="clearAllDesireRequests()" class="game-btn px-2 py-0.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 border border-rose-400/30 text-[10px] font-bold text-rose-200">
+                🗑️ Clear All
+              </button>
+            </div>
+            <div id="herActiveRequestsList" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Send a Specific Intimate Request from Her to Him -->
+          <div class="game-card rounded-3xl p-4 sm:p-5">
+            <h3 class="font-game text-base font-bold text-pink-300 mb-1 flex items-center gap-1.5">
+              <span>✨</span>
+              <span>Send Him a Specific Desire / Request</span>
+            </h3>
+            <p class="text-xs text-slate-300 mb-3">
+              Tap a preset fantasy/activity card or write a specific request — it pops up on his UI immediately.
+            </p>
+
+            <!-- Timing & Vibe Selectors -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">When</label>
+                <select id="herReqTiming" class="w-full bg-black/40 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                  <option value="Tonight 🌙">Tonight 🌙</option>
+                  <option value="Right Now ⚡">Right Now ⚡</option>
+                  <option value="Tomorrow Morning ☀️">Tomorrow Morning ☀️</option>
+                  <option value="This Weekend 🥂">This Weekend 🥂</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Vibe / Intensity</label>
+                <select id="herReqVibe" class="w-full bg-black/40 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                  <option value="Sweet &amp; Sensual 💕">Sweet &amp; Sensual 💕</option>
+                  <option value="Passionate &amp; Heated 🔥">Passionate &amp; Heated 🔥</option>
+                  <option value="Playful &amp; Teasing 😈">Playful &amp; Teasing 😈</option>
+                  <option value="Extra Spicy 🌶️">Extra Spicy 🌶️</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Preset Desire Deck Grid -->
+            <div id="herDesirePresetsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"></div>
+
+            <!-- Custom Specific Request Input -->
+            <div class="flex gap-2">
+              <input id="herCustomDesireInput" type="text" placeholder="Or type a specific request you want to do together..." class="flex-1 bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-pink-400" />
+              <button id="btnHerSendCustomDesire" onclick="sendCustomDesire('her')" class="game-btn px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 text-xs font-bold text-white shadow-md">
+                Send 🔥
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- PHONE 2: BOYFRIEND UI ("HIS VIEW")                                    -->
+      <!-- ===================================================================== -->
+      <section id="hisPhoneContainer" class="phone-frame p-4 sm:p-5 transition-all hidden">
+        <!-- Phone Status Bar Header -->
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-sky-500/20">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-xl shadow-md shadow-sky-500/30">
+              👨
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="hisNameDisplay" class="font-game font-bold text-base text-sky-200">Alex's Co-Pilot</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30">HIS PHONE</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Zero-manipulation live insights &amp; two-way desire sync</p>
+            </div>
+          </div>
+          <!-- His Sub-Navigation Tabs -->
+          <div class="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
+            <button id="hisTabBtnRadar" onclick="setHisSubTab('radar')" class="game-btn px-2.5 py-1 rounded-lg font-semibold bg-sky-500 text-white">
+              📡 Her Insight Radar
+            </button>
+            <button id="hisTabBtnSpark" onclick="setHisSubTab('spark')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white flex items-center gap-1">
+              <span>🔥 Spark Sync</span>
+              <span id="hisSparkDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- HIS SUB-VIEW 1: AUTOMATIC PARTNER INSIGHT RADAR & CRAVINGS -->
+        <div id="hisViewRadar" class="space-y-4">
+          <!-- Live Status Banner: Validated vs Auto-Predicted -->
+          <div class="game-card-his rounded-3xl p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-200 border border-sky-400/30">
+                <span id="hisPhaseEmoji">✨</span>
+                <span id="hisPhaseTitle">Her Cycle: Day 14 • Ovulatory Phase</span>
+              </div>
+              <span id="hisValidationStatusBadge" class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                🔮 Smart Prediction Active
+              </span>
+            </div>
+
+            <h2 id="hisInsightHeadline" class="font-game text-xl sm:text-2xl font-bold text-white mb-1.5">
+              High Confidence, Flirty &amp; Social Peak
+            </h2>
+            <p id="hisInsightBriefing" class="text-xs sm:text-sm text-sky-100/90 leading-relaxed mb-4">
+              Her estrogen is at its monthly peak today. She is naturally more energetic, receptive to romance, and likely in a high-drive mood. Plan something fun or spontaneous tonight!
+            </p>
+
+            <!-- 3 Telemetry Gauges for Him -->
+            <div class="grid grid-cols-3 gap-2.5 pt-3 border-t border-white/10">
+              <div class="bg-black/25 rounded-2xl p-2.5 border border-white/5">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Her Mood</span>
+                <span id="hisReadoutMood" class="text-xs sm:text-sm font-bold text-pink-300 mt-0.5 block">✨ Magnetic &amp; Happy</span>
+              </div>
+              <div class="bg-black/25 rounded-2xl p-2.5 border border-white/5">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Her Drive</span>
+                <span id="hisReadoutDrive" class="text-xs sm:text-sm font-bold text-amber-300 mt-0.5 block">🔥 80% High</span>
+              </div>
+              <div class="bg-black/25 rounded-2xl p-2.5 border border-white/5">
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Sensitivity</span>
+                <span id="hisReadoutSensitivity" class="text-xs sm:text-sm font-bold text-sky-300 mt-0.5 block">⚡ Outgoing &amp; Bold</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- HER CRAVINGS & SUPPORT ALERTS (With 1-Tap "I'm On It!" Action for Boyfriend) -->
+          <div class="game-card rounded-3xl p-4 sm:p-5 border border-amber-400/30">
+            <div class="flex items-center justify-between mb-2.5">
+              <div>
+                <h3 class="font-game text-base font-bold text-amber-300 flex items-center gap-2">
+                  <span>🍫</span>
+                  <span>Her Live Cravings &amp; Comfort Alerts</span>
+                </h3>
+                <p class="text-xs text-slate-300">Tap any craving to let her know you're surprising her with it (+25 XP)</p>
+              </div>
+            </div>
+            <div id="hisCravingsList" class="flex flex-wrap gap-2 mb-3"></div>
+            <div id="hisSymptomsList" class="flex flex-wrap gap-1.5 pt-2 border-t border-white/10"></div>
+          </div>
+
+          <!-- GAMIFIED BOYFRIEND DAILY QUESTS -->
+          <div class="game-card rounded-3xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-game text-base font-bold text-emerald-300 flex items-center gap-2">
+                  <span>🎯</span>
+                  <span>Boyfriend Daily Care Quests</span>
+                </h3>
+                <p class="text-xs text-slate-300">Auto-generated from her current cycle phase &amp; validated needs</p>
+              </div>
+              <span id="hisQuestCounterBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                0 / 3 Completed
+              </span>
+            </div>
+            <div id="hisQuestsContainer" class="space-y-2.5"></div>
+          </div>
+        </div>
+
+        <!-- HIS SUB-VIEW 2: TWO-WAY SPARK & DESIRE SYNC -->
+        <div id="hisViewSpark" class="space-y-4 hidden">
+          <!-- Live Two-Way Drive Meters on His Phone -->
+          <div class="game-card-his rounded-3xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
+                  <span>🔥</span>
+                  <span>Two-Way Intimacy &amp; Drive Sync</span>
+                </h3>
+                <p class="text-xs text-sky-200/80">See her live sex drive &amp; broadcast yours instantaneously</p>
+              </div>
+              <div id="hisSparkSynergyBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                ⚡ 82% Couple Spark
+              </div>
+            </div>
+
+            <!-- Her Live Drive Readout on His Phone -->
+            <div class="bg-black/30 rounded-2xl p-3.5 border border-pink-500/30 mb-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-pink-300">👩 Her Live Drive Right Now</span>
+                <span id="hisViewOfHerDriveLabel" class="text-xs font-extrabold text-amber-300">🔥 80% — High Drive / Frisky</span>
+              </div>
+              <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                <div id="hisViewOfHerDriveBar" class="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 transition-all duration-300" style="width: 80%"></div>
+              </div>
+              <p id="hisViewOfHerDriveSource" class="text-[11px] text-slate-300 mt-1.5">
+                🔮 Based on Ovulatory Phase peak (updates live when she adjusts or validates)
+              </p>
+            </div>
+
+            <!-- His Drive Slider -->
+            <div class="bg-black/30 rounded-2xl p-3.5 border border-sky-500/30">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-sky-300">👨 Your Current Drive</span>
+                <span id="hisDriveStatusLabel" class="text-xs font-extrabold text-sky-200">🔥 78% — High Drive</span>
+              </div>
+              <input id="hisDriveSlider" type="range" min="0" max="100" value="78" oninput="updateDriveLevel('his', this.value)" class="drive-slider" />
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                <span>💤 Recharging</span>
+                <span>🌸 Warm</span>
+                <span>🔥 High Drive</span>
+                <span>🌋 Ready Now</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Intimate Requests Feed on His Phone -->
+          <div class="game-card rounded-3xl p-4 sm:p-5 border border-amber-400/30">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-game text-base font-bold text-amber-300 flex items-center gap-1.5">
+                <span>💌</span>
+                <span>Incoming &amp; Active Intimate Requests</span>
+              </h3>
+              <button id="btnClearAllRequestsHis" onclick="clearAllDesireRequests()" class="game-btn px-2 py-0.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 border border-rose-400/30 text-[10px] font-bold text-rose-200">
+                🗑️ Clear All
+              </button>
+            </div>
+            <div id="hisActiveRequestsList" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Send a Specific Intimate Request from Him to Her -->
+          <div class="game-card rounded-3xl p-4 sm:p-5">
+            <h3 class="font-game text-base font-bold text-sky-300 mb-1 flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Send Her a Specific Desire / Request</span>
+            </h3>
+            <p class="text-xs text-slate-300 mb-3">
+              Let her know what you're in the mood to do — appears immediately on her Spark Sync tab.
+            </p>
+
+            <!-- Timing & Vibe Selectors -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">When</label>
+                <select id="hisReqTiming" class="w-full bg-black/40 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                  <option value="Tonight 🌙">Tonight 🌙</option>
+                  <option value="Right Now ⚡">Right Now ⚡</option>
+                  <option value="Tomorrow Morning ☀️">Tomorrow Morning ☀️</option>
+                  <option value="This Weekend 🥂">This Weekend 🥂</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Vibe / Intensity</label>
+                <select id="hisReqVibe" class="w-full bg-black/40 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                  <option value="Passionate &amp; Heated 🔥">Passionate &amp; Heated 🔥</option>
+                  <option value="Sweet &amp; Sensual 💕">Sweet &amp; Sensual 💕</option>
+                  <option value="Playful &amp; Teasing 😈">Playful &amp; Teasing 😈</option>
+                  <option value="Extra Spicy 🌶️">Extra Spicy 🌶️</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Preset Desire Deck Grid for Him -->
+            <div id="hisDesirePresetsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"></div>
+
+            <!-- Custom Specific Request Input for Him -->
+            <div class="flex gap-2">
+              <input id="hisCustomDesireInput" type="text" placeholder="Or write a custom intimate request for her..." class="flex-1 bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400" />
+              <button id="btnHisSendCustomDesire" onclick="sendCustomDesire('his')" class="game-btn px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 text-xs font-bold text-white shadow-md">
+                Send 🔥
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- GAMIFIED ACHIEVEMENTS & BADGE BAR (16 Progressive Multi-Tier Achievements) -->
+    <section class="mt-6 game-card rounded-3xl p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🏆</span>
+            <h3 class="font-game text-base sm:text-lg font-bold text-white">Couple Sync Badges &amp; Progression Achievements</h3>
+            <span id="unlockedBadgesCount" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">0 / 16 Unlocked</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Earn badges over weeks of consistent daily validations, craving rescues, care quests, and mutual sparks.</p>
+        </div>
+        <!-- Category Filter Buttons -->
+        <div class="flex flex-wrap items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 text-[11px]">
+          <button id="achFilterAll" onclick="setAchievementFilter('all')" class="game-btn px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950">All (16)</button>
+          <button id="achFilterCycle" onclick="setAchievementFilter('cycle')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white">🌸 Cycle</button>
+          <button id="achFilterCare" onclick="setAchievementFilter('care')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white">🛡️ Care &amp; Cravings</button>
+          <button id="achFilterSpark" onclick="setAchievementFilter('spark')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white">🔥 Intimacy</button>
+          <button id="achFilterUnlocked" onclick="setAchievementFilter('unlocked')" class="game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white">✓ Unlocked</button>
+        </div>
+      </div>
+      <div id="achievementsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: TWO-PHONE LIVE SYNC PAIRING & ROOM CODE                      -->
+  <!-- ===================================================================== -->
+  <div id="syncModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="game-card rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 border border-purple-400/40 space-y-4 my-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
+          <span>🔗</span>
+          <span>Two-Phone Live Sync Pairing</span>
+        </h3>
+        <button id="btnCloseSyncModal" onclick="closeModal('syncModal')" class="game-btn w-8 h-8 rounded-xl bg-white/10 text-slate-300 hover:text-white">✕</button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Enter the same <strong>Couple Room Code</strong> on both Android phones. On Phone 1, select <strong>👩 Her UI</strong>; on Phone 2, select <strong>👨 His UI</strong>. Every validation, craving, drive slider move, and intimate request syncs live over encrypted WebSockets!
+      </p>
+
+      <div class="bg-black/40 rounded-2xl p-3.5 border border-white/10 space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-purple-300 mb-1">Couple Room Code</label>
+          <div class="flex gap-2">
+            <input id="roomCodeInput" type="text" value="LUNA-42" class="flex-1 bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-300 uppercase focus:outline-none focus:border-purple-400" />
+            <button id="btnConnectRoom" onclick="applyRoomCode()" class="game-btn px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white">
+              Connect
+            </button>
+            <button id="btnRandomRoom" onclick="generateNewRoomCode()" class="game-btn px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200" title="Generate random code">
+              🎲
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-pink-300 mb-1">Her Display Name</label>
+            <input id="herNameInput" type="text" value="Mia" placeholder="Her name..." class="w-full bg-white/5 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-sky-300 mb-1">His Display Name</label>
+            <input id="hisNameInput" type="text" value="Alex" placeholder="His name..." class="w-full bg-white/5 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-amber-300 mb-1">Current Cycle Day (1–35)</label>
+            <div class="flex items-center gap-1">
+              <button id="modalCycleDayMinusBtn" type="button" onclick="shiftCycleDay(-1)" class="game-btn px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white">-</button>
+              <input id="setupCycleDayInput" type="number" min="1" max="35" value="1" oninput="setCycleDayFromModalInput(this.value)" onchange="setCycleDayFromModalInput(this.value)" class="w-full bg-white/5 border border-white/15 rounded-xl px-2 py-1.5 text-xs text-center font-bold text-white" />
+              <button id="modalCycleDayPlusBtn" type="button" onclick="shiftCycleDay(1)" class="game-btn px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white">+</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-purple-300 mb-1">Cycle Length (Days)</label>
+            <input id="setupCycleLenInput" type="number" min="21" max="35" value="28" oninput="setCycleLengthFromModalInput(this.value)" onchange="setCycleLengthFromModalInput(this.value)" class="w-full bg-white/5 border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white" />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 text-xs text-emerald-200 flex items-center justify-between">
+        <span id="modalSyncStatusDetail">🟢 Live Cloud Relay + Local Broadcast Ready</span>
+        <button id="btnCopyRoomCode" onclick="copyRoomCode()" class="game-btn px-2.5 py-1 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-100 font-bold">
+          Copy Code
+        </button>
+      </div>
+
+      <!-- Fresh Start / Reset Duo Data Section -->
+      <div class="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-xs font-bold text-rose-200">🧹 Start Fresh / Reset Duo Data</div>
+            <p class="text-[11px] text-slate-300">Wipe all XP, badges, streaks, requests &amp; logs for a brand-new couple profile.</p>
+          </div>
+          <button id="btnTriggerFreshReset" onclick="showResetConfirmBox()" class="game-btn px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-[11px] font-bold text-white whitespace-nowrap">
+            Reset All Data
+          </button>
+        </div>
+        <div id="resetConfirmBox" class="hidden pt-2 border-t border-rose-500/30 flex items-center justify-between gap-2">
+          <span class="text-[11px] text-rose-200 font-semibold">Are you sure? This resets both phones to Level 1 (0 XP).</span>
+          <div class="flex gap-1.5">
+            <button id="btnConfirmFreshReset" onclick="executeFreshCoupleReset()" class="game-btn px-2.5 py-1 rounded-lg bg-rose-500 text-white text-[11px] font-extrabold">
+              Yes, Wipe Fresh
+            </button>
+            <button id="btnCancelFreshReset" onclick="hideResetConfirmBox()" class="game-btn px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 text-[11px]">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button id="btnSaveSyncSettings" onclick="savePartnerNamesAndClose()" class="game-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-xs font-bold text-white">
+          Save &amp; Sync Now ✨
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: ANDROID INSTALLATION GUIDE                                   -->
+  <!-- ===================================================================== -->
+  <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="game-card rounded-3xl max-w-md w-full p-5 sm:p-6 border border-sky-400/40 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
+          <span>📲</span>
+          <span>Install on Both Android Phones</span>
+        </h3>
+        <button id="btnCloseInstallModal" onclick="closeModal('installModal')" class="game-btn w-8 h-8 rounded-xl bg-white/10 text-slate-300 hover:text-white">✕</button>
+      </div>
+      <div class="space-y-3 text-xs text-slate-200 leading-relaxed">
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="font-bold text-sky-300 mb-1">Step 1 — Install as a Full-Screen Android App (PWA)</div>
+          <p class="text-slate-300">
+            Open this app in <strong>Chrome on Android</strong> on both phones, tap the <strong>⋮ menu (top-right)</strong>, and tap <strong>"Add to Home screen" / "Install app"</strong>. It launches full-screen with its own home icon just like a native Android app!
+          </p>
+        </div>
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="font-bold text-pink-300 mb-1">Step 2 — Pick Each Partner's Role UI</div>
+          <p class="text-slate-300">
+            On your girlfriend's phone, tap <strong>👩 Her UI</strong>. On your phone, tap <strong>👨 His UI</strong>. Enter the same <strong>Couple Room Code</strong> in <strong>🔗 Pair 2 Phones</strong>.
+          </p>
+        </div>
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="font-bold text-amber-300 mb-1">Step 3 — Daily Prediction &amp; 1-Tap Validation</div>
+          <p class="text-slate-300">
+            Every day, the app automatically calculates her cycle phase, hormone forecast, and likely cravings so you get insights immediately — and she simply taps <strong>Validate Today's Predictions</strong> once a day to confirm!
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button id="btnDownloadStandaloneHtml" onclick="downloadStandaloneApp()" class="game-btn flex-1 py-2.5 px-3 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/40 text-xs font-bold text-emerald-200">
+          💾 Download Standalone App (.html)
+        </button>
+        <button id="btnGotItInstall" onclick="closeModal('installModal')" class="game-btn flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 text-xs font-bold text-white">
+          Got It! Let's Play 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION LOGIC & REAL-TIME SYNC ENGINE                             -->
+  <!-- ===================================================================== -->
+  <script>
+    // -----------------------------------------------------------------------
+    // 1. CYCLE PHASE PREDICTION MODEL (28-Day Biological + Craving Engine)
+    // -----------------------------------------------------------------------
+    const CYCLE_PHASES = [
+      {
+        id: 'menstrual',
+        name: 'Menstrual Phase',
+        days: [1, 2, 3, 4, 5],
+        emoji: '🩸',
+        fertility: 'Low Fertility',
+        herHeadline: 'Cozy Renewal & Warm Comfort',
+        herDesc: 'Estrogen and progesterone are at their lowest reset point. Your body craves iron-rich warmth, extra rest, and gentle comfort.',
+        hisHeadline: 'Comfort Mode — Bring Warmth & Chocolate',
+        hisBriefing: 'She is in her Menstrual Phase (Days 1–5). Energy and hormone levels are resetting, so cramps or fatigue may kick in. Surprising her with her favorite comfort food and taking chores off her plate scores massive points today!',
+        sensitivity: '🧸 Needs Extra Warmth',
+        estrogen: 20,
+        progesterone: 15,
+        energy: 40,
+        predictedDrive: 30,
+        predictedMood: 'Cozy & Low-Key 🧸',
+        predictedCravings: ['🍫 Dark Chocolate', '🍜 Warm Ramen / Soup', '🧋 Brown Sugar Boba'],
+        predictedSymptoms: ['⚡ Mild Cramps', '🔋 Low Energy / Nap Mode', '🫂 Needs Cuddles & Heating Pad'],
+        boyfriendQuests: [
+          { id: 'q_m1', title: 'Bring her Dark Chocolate or a warm snack without being asked', xp: 45 },
+          { id: 'q_m2', title: 'Prepare a heating pad / warm blanket & offer a lower-back rub', xp: 50 },
+          { id: 'q_m3', title: 'Handle dinner & dishes tonight so she can fully relax', xp: 40 }
+        ]
+      },
+      {
+        id: 'follicular',
+        name: 'Follicular Phase',
+        days: [6, 7, 8, 9, 10, 11, 12],
+        emoji: '🌱',
+        fertility: 'Rising Fertility',
+        herHeadline: 'Spring Bloom & Rising Curiosity',
+        herDesc: 'Estrogen is climbing steadily! Brain fog lifts, optimism rises, and your appetite for fun outings and playful connection grows.',
+        hisHeadline: 'Upbeat & Playful — Great Time for a Fun Date',
+        hisBriefing: 'She is in her Follicular Phase (Days 6–12). Rising estrogen boosts her energy, creativity, and playfulness. She is much more open to trying new restaurants, playful banter, and spontaneous adventures!',
+        sensitivity: '🌱 Playful & Curious',
+        estrogen: 68,
+        progesterone: 20,
+        energy: 78,
+        predictedDrive: 65,
+        predictedMood: 'Playful & Energized 🌱',
+        predictedCravings: ['🍣 Fresh Sushi / Poke', '🍓 Iced Matcha / Fruit', '🌮 Crispy Tacos'],
+        predictedSymptoms: ['✨ Clear Headed', '💃 Social & Active', '💌 Craving Flirty Banter'],
+        boyfriendQuests: [
+          { id: 'q_f1', title: 'Plan a fun outing or surprise coffee/matcha run together', xp: 35 },
+          { id: 'q_f2', title: 'Send her a flirty midday compliment or inside joke', xp: 30 },
+          { id: 'q_f3', title: 'Initiate a playful evening activity or game night', xp: 40 }
+        ]
+      },
+      {
+        id: 'ovulatory',
+        name: 'Ovulatory Phase',
+        days: [13, 14, 15, 16],
+        emoji: '✨',
+        fertility: 'Peak Fertility',
+        herHeadline: 'Magnetic Glow & Peak Desire',
+        herDesc: 'Estrogen and LH hit their monthly peak! Our model predicts maximum confidence, magnetic social energy, and your highest natural sex drive.',
+        hisHeadline: 'High Confidence, Flirty & Peak Libido Window',
+        hisBriefing: 'She is in her Ovulatory Phase (Days 13–16)! Biologically, estrogen and luteinizing hormone peak right now — triggering her highest natural sex drive, confidence, and desire for romantic connection.',
+        sensitivity: '⚡ Outgoing & Bold',
+        estrogen: 96,
+        progesterone: 25,
+        energy: 92,
+        predictedDrive: 88,
+        predictedMood: 'Magnetic & Flirty ✨',
+        predictedCravings: ['🍓 Chocolate-Dipped Berries', '🍨 Gelato / Sweet Treats', '🥂 Mocktail / Tapas'],
+        predictedSymptoms: ['🔥 High Natural Libido', '✨ Glowing & Confident', '💋 Craving Physical Touch'],
+        boyfriendQuests: [
+          { id: 'q_o1', title: 'Compliment how radiant she looks & initiate romantic touch', xp: 40 },
+          { id: 'q_o2', title: 'Plan a romantic date night or bedroom surprise tonight', xp: 55 },
+          { id: 'q_o3', title: 'Check the Spark Sync tab & match her high-drive request', xp: 50 }
+        ]
+      },
+      {
+        id: 'luteal',
+        name: 'Luteal Phase',
+        days: [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+        emoji: '🌙',
+        fertility: 'Nesting Phase',
+        herHeadline: 'Cozy Nesting & Intense Cravings',
+        herDesc: 'Progesterone dominates and your basal metabolic rate speeds up — sparking stronger carb/sweet cravings and a desire for cozy reassurance.',
+        hisHeadline: 'Cravings Alert & Extra Reassurance Mode',
+        hisBriefing: 'She is in her Luteal Phase (Days 17–28). Progesterone increases her metabolism (making food cravings very real!) and can make her feel more sensitive as hormones dip toward day 28. Be proactive with snacks, patience, and words of affirmation!',
+        sensitivity: '🌙 Sensitive — Be Extra Sweet',
+        estrogen: 45,
+        progesterone: 85,
+        energy: 54,
+        predictedDrive: 48,
+        predictedMood: 'Nesting & Craving Comfort 🌙',
+        predictedCravings: ['🍟 Salty Fries / Burgers', '🍪 Warm Cookies & Brownies', '🍕 Cheesy Pizza', '🍫 Dark Chocolate'],
+        predictedSymptoms: ['🥨 Strong Food Cravings', '😴 Winding Down Early', '💛 Needs Words of Affirmation'],
+        boyfriendQuests: [
+          { id: 'q_l1', title: 'Raid the snack aisle for her salty + sweet cravings', xp: 50 },
+          { id: 'q_l2', title: 'Give her extra reassurance, hugs & zero-pressure cozy time', xp: 45 },
+          { id: 'q_l3', title: 'Set up a cozy movie nest with her favorite comfort food', xp: 40 }
+        ]
+      }
+    ];
+
+    const ALL_MOODS = [
+      'Magnetic & Flirty ✨',
+      'Playful & Energized 🌱',
+      'Cozy & Low-Key 🧸',
+      'Nesting & Craving Comfort 🌙',
+      'Romantic & Affectionate 💕',
+      'Sensitive & Need TLC 🥺'
+    ];
+
+    const BASE_CRAVINGS = [
+      '🍫 Dark Chocolate',
+      '🍟 Salty Fries / Burgers',
+      '🍣 Fresh Sushi / Poke',
+      '🧋 Brown Sugar Boba',
+      '🍜 Warm Ramen / Soup',
+      '🍪 Warm Cookies & Brownies',
+      '🍓 Chocolate-Dipped Berries',
+      '🍕 Cheesy Pizza',
+      '🍨 Gelato / Sweet Treats',
+      '🌮 Crispy Tacos'
+    ];
+    let ALL_CRAVINGS = [...BASE_CRAVINGS];
+
+    const ALL_SYMPTOMS = [
+      '🔥 High Natural Libido',
+      '✨ Glowing & Confident',
+      '💋 Craving Physical Touch',
+      '⚡ Mild Cramps',
+      '🔋 Low Energy / Nap Mode',
+      '🫂 Needs Cuddles & Heating Pad',
+      '🥨 Strong Food Cravings',
+      '💛 Needs Words of Affirmation',
+      '💆‍♀️ Wants a Back / Foot Massage'
+    ];
+
+    const DESIRE_PRESETS = [
+      { id: 'dp1', title: 'Slow Sensual Massage & Kissing', emoji: '💆‍♀️🔥', category: 'Sensual' },
+      { id: 'dp2', title: 'Spontaneous Bedroom Takeover', emoji: '⚡😈', category: 'Spicy' },
+      { id: 'dp3', title: 'Lingerie / Dress-Up Surprise', emoji: '🎀✨', category: 'Playful' },
+      { id: 'dp4', title: 'Shower / Bath Together Tonight', emoji: '🚿💕', category: 'Romantic' },
+      { id: 'dp5', title: 'Try a New Position / Fantasy Focus', emoji: '🌶️🔥', category: 'Adventurous' },
+      { id: 'dp6', title: 'Morning Cuddles Turning Frisky', emoji: '☀️💋', category: 'Sweet' }
+    ];
+
+    const ACHIEVEMENTS_LIST = [
+      // Cycle & Validation Streak Achievements
+      { id: 'ach_sync', category: 'cycle', tier: 'Bronze 🥉', xpReward: 50, title: 'First Bloom', desc: 'Validate your very first daily cycle prediction', icon: '🌱', metric: 'totalValidations', target: 1 },
+      { id: 'ach_streak_3', category: 'cycle', tier: 'Bronze 🥉', xpReward: 100, title: '3-Day Rhythm', desc: 'Maintain a 3-day daily validation streak', icon: '🔥', metric: 'streakDays', target: 3 },
+      { id: 'ach_streak_7', category: 'cycle', tier: 'Silver 🥈', xpReward: 200, title: 'Week of Harmony', desc: 'Maintain a 7-day daily validation streak', icon: '🌟', metric: 'streakDays', target: 7 },
+      { id: 'ach_val_14', category: 'cycle', tier: 'Gold 🥇', xpReward: 400, title: 'Half-Cycle Oracle', desc: 'Validate predictions on 14 total cycle days', icon: '🔮', metric: 'totalValidations', target: 14 },
+      { id: 'ach_phases_4', category: 'cycle', tier: 'Gold 🥇', xpReward: 350, title: 'Four-Phase Explorer', desc: 'Validate check-ins across all 4 cycle phases', icon: '🧭', metric: 'phasesValidatedCount', target: 4 },
+      { id: 'ach_streak_28', category: 'cycle', tier: 'Mythic 💎', xpReward: 1000, title: 'Full Moon Legend', desc: 'Complete a full 28-day cycle validation streak', icon: '👑', metric: 'streakDays', target: 28 },
+
+      // Boyfriend Cravings & Care Quest Achievements
+      { id: 'ach_crave', category: 'care', tier: 'Bronze 🥉', xpReward: 75, title: 'Snack Responder', desc: 'Boyfriend claims & fulfills 3 craving alerts', icon: '🍫', metric: 'totalCravingsClaimed', target: 3 },
+      { id: 'ach_crave_10', category: 'care', tier: 'Silver 🥈', xpReward: 225, title: 'Craving Hero', desc: 'Boyfriend claims & fulfills 10 craving alerts', icon: '🛒', metric: 'totalCravingsClaimed', target: 10 },
+      { id: 'ach_crave_25', category: 'care', tier: 'Gold 🥇', xpReward: 500, title: 'Midnight Craving Savior', desc: 'Boyfriend claims & fulfills 25 craving alerts', icon: '👨‍🍳', metric: 'totalCravingsClaimed', target: 25 },
+      { id: 'ach_quest_5', category: 'care', tier: 'Bronze 🥉', xpReward: 100, title: 'Dedicated Co-Pilot', desc: 'Boyfriend completes 5 Partner Care Quests', icon: '🛡️', metric: 'totalQuestsCompleted', target: 5 },
+      { id: 'ach_quest_15', category: 'care', tier: 'Silver 🥈', xpReward: 275, title: 'Knight of Comfort', desc: 'Boyfriend completes 15 Partner Care Quests', icon: '⚔️', metric: 'totalQuestsCompleted', target: 15 },
+      { id: 'ach_quest_30', category: 'care', tier: 'Mythic 💎', xpReward: 650, title: 'Soulmate Guardian', desc: 'Boyfriend completes 30 Partner Care Quests', icon: '💎', metric: 'totalQuestsCompleted', target: 30 },
+
+      // Two-Way Intimacy & Spark Achievements
+      { id: 'ach_req_sent_5', category: 'spark', tier: 'Bronze 🥉', xpReward: 80, title: 'Flirty Instigator', desc: 'Send 5 specific intimate requests between partners', icon: '💌', metric: 'totalRequestsSent', target: 5 },
+      { id: 'ach_quest', category: 'spark', tier: 'Silver 🥈', xpReward: 250, title: 'Desire Matchmakers', desc: 'Mutually accept 5 two-way intimate requests', icon: '💘', metric: 'totalRequestsAccepted', target: 5 },
+      { id: 'ach_req_acc_15', category: 'spark', tier: 'Gold 🥇', xpReward: 500, title: 'Unstoppable Chemistry', desc: 'Mutually accept 15 two-way intimate requests', icon: '🌶️', metric: 'totalRequestsAccepted', target: 15 },
+      { id: 'ach_spark', category: 'spark', tier: 'Mythic 💎', xpReward: 750, title: 'Twin Supernovas', desc: 'Hit 85%+ mutual high drive & accept 5 requests', icon: '🌋', metric: 'supernovaMatches', target: 5 }
+    ];
+
+    // -----------------------------------------------------------------------
+    // 2. APPLICATION STATE (Starts 100% Fresh for Every New Couple Duo)
+    // -----------------------------------------------------------------------
+    let uiRole = 'her'; // 'her' | 'his' | 'split'
+    let herSubTab = 'cycle'; // 'cycle' | 'spark'
+    let hisSubTab = 'radar'; // 'radar' | 'spark'
+    let achievementFilter = 'all'; // 'all' | 'cycle' | 'care' | 'spark' | 'unlocked'
+    let soundEnabled = true;
+    let mqttClient = null;
+    let localChannel = null;
+    let clientInstanceId = 'client_' + Math.random().toString(36).substring(2, 9);
+
+    function createFreshState(roomCode, herName, hisName, cycleDay, cycleLength) {
+      const startDay = cycleDay || 1;
+      const phase = CYCLE_PHASES.find(p => p.days.includes(startDay)) || CYCLE_PHASES[0];
+      return {
+        roomCode: (roomCode || 'LUNA-42').toUpperCase(),
+        herName: herName || 'Mia',
+        hisName: hisName || 'Alex',
+        cycleDay: startDay,
+        cycleLength: cycleLength || 28,
+        coupleXp: 0,
+        coupleLevel: 1,
+        streakDays: 0,
+        dayRecords: {},
+        herDrive: phase.predictedDrive,
+        hisDrive: 50,
+        herDriveValidatedToday: false,
+        intimateRequests: [],
+        unlockedAchievements: [],
+        stats: {
+          totalValidations: 0,
+          phasesValidated: [],
+          totalCravingsClaimed: 0,
+          totalQuestsCompleted: 0,
+          totalRequestsSent: 0,
+          totalRequestsAccepted: 0,
+          supernovaMatches: 0
+        },
+        updatedAtMs: Date.now(),
+        lastUpdatedBy: clientInstanceId,
+        lastEventBanner: ''
+      };
+    }
+
+    let appState = createFreshState('LUNA-42', 'Mia', 'Alex', 1, 28);
+
+    // -----------------------------------------------------------------------
+    // 3. SOUND SYNTHESIS ENGINE (Web Audio API - Zero External Audio Files)
+    // -----------------------------------------------------------------------
+    let audioCtx = null;
+    function playSound(kind) {
+      if (!soundEnabled) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!audioCtx) audioCtx = new AudioContextClass();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        if (kind === 'tap') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(680, now + 0.06);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } else if (kind === 'validate' || kind === 'quest') {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.11, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.18);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.19);
+          });
+        } else if (kind === 'spark') {
+          const notes = [440, 554.37, 659.25, 880, 1108.73];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+            gain.gain.setValueAtTime(0.12, now + idx * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.22);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.05);
+            osc.stop(now + idx * 0.05 + 0.23);
+          });
+        }
+      } catch (e) {
+        // Ignore audio errors before user gesture
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('btnSoundToggle');
+      if (btn) btn.textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) playSound('tap');
+      showToast(soundEnabled ? '🔊 Game sound effects enabled' : '🔇 Sound muted', 'info');
+    }
+
+    // -----------------------------------------------------------------------
+    // 4. PHASE & DAILY RECORD HELPER FUNCTIONS
+    // -----------------------------------------------------------------------
+    function getPhaseForDay(day) {
+      const d = parseInt(day, 10) || 1;
+      for (let i = 0; i < CYCLE_PHASES.length; i++) {
+        if (CYCLE_PHASES[i].days.includes(d)) return CYCLE_PHASES[i];
+      }
+      return CYCLE_PHASES[3];
+    }
+
+    function ensureDayRecord(day) {
+      if (!appState.dayRecords[day]) {
+        const phase = getPhaseForDay(day);
+        appState.dayRecords[day] = {
+          validated: false,
+          validatedAt: '',
+          mood: phase.predictedMood,
+          cravings: [...phase.predictedCravings],
+          symptoms: [...phase.predictedSymptoms],
+          claimedCravings: {},
+          completedQuests: {}
+        };
+      }
+      return appState.dayRecords[day];
+    }
+
+    function ensureStatsObject() {
+      if (!appState.stats) {
+        appState.stats = {
+          totalValidations: 0,
+          phasesValidated: [],
+          totalCravingsClaimed: 0,
+          totalQuestsCompleted: 0,
+          totalRequestsSent: 0,
+          totalRequestsAccepted: 0,
+          supernovaMatches: 0
+        };
+      }
+      if (!Array.isArray(appState.stats.phasesValidated)) {
+        appState.stats.phasesValidated = [];
+      }
+      return appState.stats;
+    }
+
+    function getXpRequiredForNextLevel() {
+      return 500 + (appState.coupleLevel - 1) * 250;
+    }
+
+    function addXp(amount, reason) {
+      appState.coupleXp += amount;
+      let needed = getXpRequiredForNextLevel();
+      while (appState.coupleXp >= needed) {
+        appState.coupleXp -= needed;
+        appState.coupleLevel += 1;
+        showToast('🎉 LEVEL UP! You reached Couple Level ' + appState.coupleLevel + '!', 'spark');
+        needed = getXpRequiredForNextLevel();
+      }
+      if (reason) {
+        showToast('✨ +' + amount + ' XP: ' + reason, 'success');
+      }
+    }
+
+    function getAchievementMetricValue(metric) {
+      const st = ensureStatsObject();
+      if (metric === 'streakDays') return appState.streakDays || 0;
+      if (metric === 'phasesValidatedCount') return st.phasesValidated.length;
+      return st[metric] || 0;
+    }
+
+    function evaluateAchievements() {
+      ensureStatsObject();
+      ACHIEVEMENTS_LIST.forEach(ach => {
+        if (!appState.unlockedAchievements.includes(ach.id)) {
+          const currentVal = getAchievementMetricValue(ach.metric);
+          if (currentVal >= ach.target) {
+            appState.unlockedAchievements.push(ach.id);
+            appState.coupleXp += ach.xpReward;
+            let needed = getXpRequiredForNextLevel();
+            while (appState.coupleXp >= needed) {
+              appState.coupleXp -= needed;
+              appState.coupleLevel += 1;
+              needed = getXpRequiredForNextLevel();
+            }
+            showToast('🏆 Badge Unlocked: ' + ach.title + ' (+' + ach.xpReward + ' XP)!', 'spark');
+          }
+        }
+      });
+    }
+
+    function unlockAchievement(achId) {
+      evaluateAchievements();
+    }
+
+    function setAchievementFilter(filter) {
+      achievementFilter = filter;
+      playSound('tap');
+      renderAll();
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. USER ACTIONS: CYCLE PREDICTION & DAILY VALIDATION
+    // -----------------------------------------------------------------------
+    function setCycleDay(day) {
+      const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+      const parsed = parseInt(day, 10);
+      if (isNaN(parsed)) return;
+      const clamped = (((parsed - 1) % maxLen) + maxLen) % maxLen + 1;
+      appState.cycleDay = clamped;
+      const rec = ensureDayRecord(clamped);
+      const phase = getPhaseForDay(clamped);
+      if (!rec.validated) {
+        appState.herDrive = phase.predictedDrive;
+      }
+      const setupDayEl = document.getElementById('setupCycleDayInput');
+      if (setupDayEl && document.activeElement !== setupDayEl) {
+        setupDayEl.value = String(clamped);
+      }
+      playSound('tap');
+      saveAndBroadcast('Switched to Cycle Day ' + clamped + ' (' + phase.name + ')');
+      renderAll();
+    }
+
+    function shiftCycleDay(delta) {
+      const cur = parseInt(appState.cycleDay, 10) || 1;
+      setCycleDay(cur + delta);
+    }
+
+    function setCycleDayFromModalInput(val) {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed)) return;
+      const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+      const clamped = Math.min(maxLen, Math.max(1, parsed));
+      setCycleDay(clamped);
+    }
+
+    function setCycleLengthFromModalInput(val) {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed < 21 || parsed > 35) return;
+      appState.cycleLength = parsed;
+      if (appState.cycleDay > parsed) {
+        appState.cycleDay = parsed;
+      }
+      saveAndBroadcast('Updated cycle length to ' + parsed + ' days');
+      renderAll();
+    }
+
+    function setCycleDayFromStartDate(dateStr) {
+      if (!dateStr) return;
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return;
+      const start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+      const calcDay = diffDays >= 0 ? ((diffDays % maxLen) + 1) : 1;
+      appState.lastPeriodStartDate = dateStr;
+      setCycleDay(calcDay);
+      showToast('📅 Calculated Cycle Day ' + calcDay + ' from last period start date!', 'success');
+    }
+
+    function selectHerMood(mood) {
+      const rec = ensureDayRecord(appState.cycleDay);
+      rec.mood = mood;
+      playSound('tap');
+      saveAndBroadcast('Updated mood');
+      renderAll();
+    }
+
+    function toggleHerCraving(craving) {
+      const rec = ensureDayRecord(appState.cycleDay);
+      const idx = rec.cravings.indexOf(craving);
+      if (idx >= 0) {
+        rec.cravings.splice(idx, 1);
+      } else {
+        rec.cravings.push(craving);
+      }
+      playSound('tap');
+      saveAndBroadcast('Updated cravings');
+      renderAll();
+    }
+
+    function addCustomCraving() {
+      const input = document.getElementById('customCravingInput');
+      if (!input) return;
+      const raw = input.value.trim();
+      if (!raw) {
+        showToast('Type a craving first!', 'info');
+        return;
+      }
+      const formatted = raw.startsWith('🍽️') || raw.startsWith('🍫') ? raw : '🍽️ ' + raw;
+      if (!ALL_CRAVINGS.includes(formatted)) {
+        ALL_CRAVINGS.push(formatted);
+      }
+      const rec = ensureDayRecord(appState.cycleDay);
+      if (!rec.cravings.includes(formatted)) {
+        rec.cravings.push(formatted);
+      }
+      input.value = '';
+      playSound('tap');
+      addXp(15, 'Added custom craving');
+      saveAndBroadcast(appState.herName + ' added a craving: ' + formatted);
+      renderAll();
+    }
+
+    function toggleHerSymptom(symptom) {
+      const rec = ensureDayRecord(appState.cycleDay);
+      const idx = rec.symptoms.indexOf(symptom);
+      if (idx >= 0) {
+        rec.symptoms.splice(idx, 1);
+      } else {
+        rec.symptoms.push(symptom);
+      }
+      playSound('tap');
+      saveAndBroadcast('Updated symptoms');
+      renderAll();
+    }
+
+    function resetDayToPredictions() {
+      const phase = getPhaseForDay(appState.cycleDay);
+      appState.dayRecords[appState.cycleDay] = {
+        validated: false,
+        validatedAt: '',
+        mood: phase.predictedMood,
+        cravings: [...phase.predictedCravings],
+        symptoms: [...phase.predictedSymptoms],
+        claimedCravings: {},
+        completedQuests: {}
+      };
+      appState.herDrive = phase.predictedDrive;
+      playSound('tap');
+      showToast('🔄 Reset Day ' + appState.cycleDay + ' to smart phase predictions', 'info');
+      saveAndBroadcast('Reset predictions');
+      renderAll();
+    }
+
+    function clearAllCravings() {
+      const rec = ensureDayRecord(appState.cycleDay);
+      rec.cravings = [];
+      rec.claimedCravings = {};
+      playSound('tap');
+      showToast('🧹 Cleared today\'s cravings list', 'info');
+      saveAndBroadcast(appState.herName + ' cleared today\'s cravings');
+      renderAll();
+    }
+
+    function validateTodayPredictions() {
+      const st = ensureStatsObject();
+      const rec = ensureDayRecord(appState.cycleDay);
+      const phase = getPhaseForDay(appState.cycleDay);
+      const wasAlreadyValidated = rec.validated;
+      rec.validated = true;
+      const now = new Date();
+      rec.validatedAt = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      playSound('validate');
+      if (!wasAlreadyValidated) {
+        appState.streakDays += 1;
+        st.totalValidations += 1;
+        if (!st.phasesValidated.includes(phase.id)) {
+          st.phasesValidated.push(phase.id);
+        }
+        addXp(30, 'Daily cycle predictions validated & synced to ' + appState.hisName + '!');
+      } else {
+        showToast('✅ Updated & synced validated check-in to ' + appState.hisName + '!', 'success');
+      }
+      evaluateAchievements();
+      saveAndBroadcast(appState.herName + ' validated Today\'s Cycle & Cravings!');
+      renderAll();
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. BOYFRIEND ACTIONS: CLAIM CRAVINGS & COMPLETE PARTNER QUESTS
+    // -----------------------------------------------------------------------
+    function toggleClaimCraving(craving) {
+      const st = ensureStatsObject();
+      const rec = ensureDayRecord(appState.cycleDay);
+      if (rec.claimedCravings[craving]) {
+        delete rec.claimedCravings[craving];
+        st.totalCravingsClaimed = Math.max(0, st.totalCravingsClaimed - 1);
+        playSound('tap');
+      } else {
+        rec.claimedCravings[craving] = true;
+        st.totalCravingsClaimed += 1;
+        playSound('quest');
+        addXp(20, appState.hisName + ' is bringing ' + craving + '!');
+        evaluateAchievements();
+      }
+      saveAndBroadcast(appState.hisName + ' claimed craving: ' + craving);
+      renderAll();
+    }
+
+    function togglePartnerQuest(questId, xpReward) {
+      const st = ensureStatsObject();
+      const rec = ensureDayRecord(appState.cycleDay);
+      if (rec.completedQuests[questId]) {
+        delete rec.completedQuests[questId];
+        st.totalQuestsCompleted = Math.max(0, st.totalQuestsCompleted - 1);
+        playSound('tap');
+      } else {
+        rec.completedQuests[questId] = true;
+        st.totalQuestsCompleted += 1;
+        playSound('quest');
+        addXp(Math.round(xpReward * 0.5), 'Completed Partner Care Quest!');
+        evaluateAchievements();
+      }
+      saveAndBroadcast(appState.hisName + ' completed a Partner Quest!');
+      renderAll();
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. TWO-WAY INTIMACY & DESIRE SYNC ACTIONS
+    // -----------------------------------------------------------------------
+    function formatDriveTier(val) {
+      const v = parseInt(val, 10);
+      if (v < 26) return '💤 ' + v + '% — Recharging / Cuddles';
+      if (v < 56) return '🌸 ' + v + '% — Warm & Flirty';
+      if (v < 85) return '🔥 ' + v + '% — High Drive / Frisky';
+      return '🌋 ' + v + '% — Supernova / Need You Now';
+    }
+
+    function updateDriveLevel(who, val) {
+      const numeric = parseInt(val, 10);
+      if (who === 'her') {
+        appState.herDrive = numeric;
+        appState.herDriveValidatedToday = true;
+      } else {
+        appState.hisDrive = numeric;
+      }
+      if (appState.herDrive >= 70 && appState.hisDrive >= 70) {
+        unlockAchievement('ach_spark');
+      }
+      saveAndBroadcast((who === 'her' ? appState.herName : appState.hisName) + ' updated live drive to ' + numeric + '%');
+      renderAll();
+    }
+
+    function sendPresetDesire(fromWho, presetId) {
+      const preset = DESIRE_PRESETS.find(p => p.id === presetId);
+      if (!preset) return;
+      const timingEl = document.getElementById(fromWho === 'her' ? 'herReqTiming' : 'hisReqTiming');
+      const vibeEl = document.getElementById(fromWho === 'her' ? 'herReqVibe' : 'hisReqVibe');
+      const timing = timingEl ? timingEl.value : 'Tonight 🌙';
+      const vibe = vibeEl ? vibeEl.value : 'Passionate & Heated 🔥';
+
+      const newReq = {
+        id: 'req_' + Date.now(),
+        from: fromWho,
+        title: preset.title,
+        emoji: preset.emoji,
+        timing: timing,
+        vibe: vibe,
+        status: 'pending',
+        replyNote: '',
+        createdAt: 'Just now'
+      };
+      const st = ensureStatsObject();
+      st.totalRequestsSent += 1;
+      appState.intimateRequests.unshift(newReq);
+      playSound('spark');
+      addXp(15, 'Sent intimate request to partner!');
+      evaluateAchievements();
+      saveAndBroadcast((fromWho === 'her' ? appState.herName : appState.hisName) + ' sent a desire request: ' + preset.title);
+      renderAll();
+    }
+
+    function sendCustomDesire(fromWho) {
+      const inputId = fromWho === 'her' ? 'herCustomDesireInput' : 'hisCustomDesireInput';
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) {
+        showToast('Write what you want to do first!', 'info');
+        return;
+      }
+      const timingEl = document.getElementById(fromWho === 'her' ? 'herReqTiming' : 'hisReqTiming');
+      const vibeEl = document.getElementById(fromWho === 'her' ? 'herReqVibe' : 'hisReqVibe');
+      const timing = timingEl ? timingEl.value : 'Tonight 🌙';
+      const vibe = vibeEl ? vibeEl.value : 'Passionate & Heated 🔥';
+
+      const newReq = {
+        id: 'req_' + Date.now(),
+        from: fromWho,
+        title: text,
+        emoji: '💘🔥',
+        timing: timing,
+        vibe: vibe,
+        status: 'pending',
+        replyNote: '',
+        createdAt: 'Just now'
+      };
+      const st = ensureStatsObject();
+      st.totalRequestsSent += 1;
+      appState.intimateRequests.unshift(newReq);
+      input.value = '';
+      playSound('spark');
+      addXp(20, 'Sent custom intimate request!');
+      evaluateAchievements();
+      saveAndBroadcast((fromWho === 'her' ? appState.herName : appState.hisName) + ' sent a custom request!');
+      renderAll();
+    }
+
+    function respondToDesireRequest(reqId, newStatus) {
+      const st = ensureStatsObject();
+      const req = appState.intimateRequests.find(r => r.id === reqId);
+      if (!req) return;
+      const wasAlreadyAccepted = req.status === 'accepted';
+      req.status = newStatus;
+      if (newStatus === 'accepted') {
+        req.replyNote = 'I\'m 100% in! 🔥';
+        playSound('spark');
+        if (!wasAlreadyAccepted) {
+          st.totalRequestsAccepted += 1;
+          if (appState.herDrive >= 85 && appState.hisDrive >= 85) {
+            st.supernovaMatches += 1;
+          }
+          addXp(45, 'Mutual Desire Request Accepted!');
+        }
+        evaluateAchievements();
+        const banner = document.getElementById('mutualSparkBanner');
+        if (banner) banner.classList.remove('hidden');
+      } else {
+        req.replyNote = 'Let\'s raincheck for a bit later 💕';
+        playSound('tap');
+        showToast('⏳ Marked for later / raincheck', 'info');
+      }
+      saveAndBroadcast('Responded to intimate request: ' + req.title);
+      renderAll();
+    }
+
+    function deleteDesireRequest(reqId) {
+      appState.intimateRequests = appState.intimateRequests.filter(r => r.id !== reqId);
+      playSound('tap');
+      saveAndBroadcast('Removed request card');
+      renderAll();
+    }
+
+    function clearAllDesireRequests() {
+      appState.intimateRequests = [];
+      playSound('tap');
+      showToast('🗑️ Cleared all intimate requests', 'info');
+      saveAndBroadcast('Cleared all intimate requests');
+      renderAll();
+    }
+
+    function showResetConfirmBox() {
+      const box = document.getElementById('resetConfirmBox');
+      if (box && box.classList.contains('hidden')) {
+        box.classList.remove('hidden');
+        playSound('tap');
+        showToast('⚠️ Tap "Yes, Wipe Fresh" below (or tap "Reset All Data" again) to confirm reset', 'info');
+      } else {
+        executeFreshCoupleReset();
+      }
+    }
+
+    function hideResetConfirmBox() {
+      const box = document.getElementById('resetConfirmBox');
+      if (box) box.classList.add('hidden');
+    }
+
+    function executeFreshCoupleReset() {
+      const herInp = document.getElementById('herNameInput');
+      const hisInp = document.getElementById('hisNameInput');
+      const roomInp = document.getElementById('roomCodeInput');
+      const dayInp = document.getElementById('setupCycleDayInput');
+      const lenInp = document.getElementById('setupCycleLenInput');
+
+      const rCode = (roomInp && roomInp.value.trim()) ? roomInp.value.trim().toUpperCase() : appState.roomCode;
+      const hName = (herInp && herInp.value.trim()) ? herInp.value.trim() : 'Mia';
+      const bName = (hisInp && hisInp.value.trim()) ? hisInp.value.trim() : 'Alex';
+      const cLen = (lenInp && parseInt(lenInp.value, 10)) ? Math.min(35, Math.max(21, parseInt(lenInp.value, 10))) : 28;
+      const cDay = (dayInp && !isNaN(parseInt(dayInp.value, 10))) ? Math.min(cLen, Math.max(1, parseInt(dayInp.value, 10))) : 1;
+
+      ALL_CRAVINGS = [...BASE_CRAVINGS];
+      if (dayInp) dayInp.value = String(cDay);
+      if (lenInp) lenInp.value = String(cLen);
+
+      appState = createFreshState(rCode, hName, bName, cDay, cLen);
+      appState.updatedAtMs = Date.now();
+      ensureDayRecord(cDay);
+
+      try {
+        localStorage.removeItem('syncbloom_state_v1');
+        localStorage.setItem('syncbloom_state_v2_' + rCode, JSON.stringify(appState));
+        localStorage.setItem('syncbloom_last_room', rCode);
+      } catch (e) {}
+
+      const banner = document.getElementById('mutualSparkBanner');
+      if (banner) banner.classList.add('hidden');
+
+      hideResetConfirmBox();
+      closeModal('syncModal');
+      playSound('validate');
+      saveAndBroadcast('Reset couple data to a fresh start (Level 1, 0 XP, Day ' + cDay + ')!');
+      renderAll();
+      showToast('🌱 Fresh Start! Reset to Level 1 (0 XP, Day ' + cDay + ') for ' + hName + ' & ' + bName, 'success');
+    }
+
+    function dismissSparkBanner() {
+      const banner = document.getElementById('mutualSparkBanner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    // -----------------------------------------------------------------------
+    // 8. ROLE SWITCHING, TABS & MODALS
+    // -----------------------------------------------------------------------
+    function setRoleView(role) {
+      uiRole = role;
+      playSound('tap');
+      renderAll();
+    }
+
+    function setHerSubTab(tab) {
+      herSubTab = tab;
+      playSound('tap');
+      renderAll();
+    }
+
+    function setHisSubTab(tab) {
+      hisSubTab = tab;
+      playSound('tap');
+      renderAll();
+    }
+
+    function openModal(modalId) {
+      if (modalId === 'syncModal') {
+        hideResetConfirmBox();
+        const roomInp = document.getElementById('roomCodeInput');
+        const herInp = document.getElementById('herNameInput');
+        const hisInp = document.getElementById('hisNameInput');
+        const dayInp = document.getElementById('setupCycleDayInput');
+        const lenInp = document.getElementById('setupCycleLenInput');
+        if (roomInp) roomInp.value = appState.roomCode || 'LUNA-42';
+        if (herInp) herInp.value = appState.herName || 'Mia';
+        if (hisInp) hisInp.value = appState.hisName || 'Alex';
+        if (dayInp) dayInp.value = String(appState.cycleDay || 1);
+        if (lenInp) lenInp.value = String(appState.cycleLength || 28);
+      }
+      const m = document.getElementById(modalId);
+      if (m) m.classList.remove('hidden');
+      playSound('tap');
+    }
+
+    function closeModal(modalId) {
+      if (modalId === 'syncModal') {
+        hideResetConfirmBox();
+      }
+      const m = document.getElementById(modalId);
+      if (m) m.classList.add('hidden');
+    }
+
+    function downloadStandaloneApp() {
+      try {
+        const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'syncbloom_couples_app.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showToast('💾 Downloaded syncbloom_couples_app.html!', 'success');
+      } catch (e) {
+        showToast('Use the zip package in chat to download!', 'info');
+      }
+    }
+
+    function showToast(message, type) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      let colors = 'bg-[#1e1538]/95 border-purple-400/50 text-white';
+      if (type === 'success') colors = 'bg-emerald-950/95 border-emerald-400/60 text-emerald-100';
+      if (type === 'spark') colors = 'bg-gradient-to-r from-rose-900/95 to-amber-900/95 border-amber-300/70 text-white';
+
+      toast.className = 'pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl text-xs font-semibold flex items-center justify-between gap-2 transition-all duration-300 ' + colors;
+      toast.innerHTML = '<span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 3600);
+    }
+
+    // -----------------------------------------------------------------------
+    // 9. REAL-TIME TWO-PHONE SYNC ENGINE (MQTT WebSockets + BroadcastChannel + LocalStorage)
+    // -----------------------------------------------------------------------
+    function loadSavedState() {
+      try {
+        const lastRoom = localStorage.getItem('syncbloom_last_room') || 'LUNA-42';
+        const raw = localStorage.getItem('syncbloom_state_v2_' + lastRoom);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          appState = Object.assign(createFreshState(lastRoom, 'Mia', 'Alex', 1, 28), parsed);
+          ensureStatsObject();
+        } else {
+          appState = createFreshState(lastRoom, 'Mia', 'Alex', 1, 28);
+        }
+      } catch (e) {
+        // Ignore storage errors in restricted iframes
+      }
+    }
+
+    let currentConnectedRoom = '';
+
+    function saveAndBroadcast(eventSummary) {
+      appState.updatedAtMs = Date.now();
+      appState.lastUpdatedBy = clientInstanceId;
+      appState.lastEventBanner = eventSummary || '';
+      try {
+        localStorage.setItem('syncbloom_last_room', appState.roomCode.toUpperCase());
+        localStorage.setItem('syncbloom_state_v2_' + appState.roomCode.toUpperCase(), JSON.stringify(appState));
+      } catch (e) {
+        // Ignore localStorage restrictions
+      }
+      if (localChannel) {
+        try {
+          localChannel.postMessage(JSON.stringify(appState));
+        } catch (e) {}
+      }
+      if (mqttClient && mqttClient.connected) {
+        try {
+          const topic = 'syncbloom/couples/v4/' + appState.roomCode.toUpperCase();
+          mqttClient.publish(topic, JSON.stringify(appState), { qos: 0, retain: true });
+        } catch (e) {}
+      }
+    }
+
+    function connectRealtimeRoom(roomCode) {
+      const cleanCode = (roomCode || 'LUNA-42').trim().toUpperCase();
+      appState.roomCode = cleanCode;
+      const statusText = document.getElementById('syncStatusText');
+      const dot = document.getElementById('syncDot');
+      if (statusText) statusText.textContent = 'Room: ' + cleanCode;
+
+      if (currentConnectedRoom === cleanCode && mqttClient && mqttClient.connected) {
+        return;
+      }
+      currentConnectedRoom = cleanCode;
+
+      // Setup Local BroadcastChannel for multi-tab instant sync
+      try {
+        if (localChannel) localChannel.close();
+        if (typeof BroadcastChannel !== 'undefined') {
+          localChannel = new BroadcastChannel('syncbloom_v4_' + cleanCode);
+          localChannel.onmessage = function(ev) {
+            try {
+              const incoming = JSON.parse(ev.data);
+              if (incoming && incoming.lastUpdatedBy !== clientInstanceId) {
+                appState = incoming;
+                ensureStatsObject();
+                renderAll();
+                if (incoming.lastEventBanner) {
+                  showToast('📲 Live Sync: ' + incoming.lastEventBanner, 'spark');
+                }
+              }
+            } catch (err) {}
+          };
+        }
+      } catch (e) {}
+
+      // Setup MQTT over WebSockets for two separate Android phones
+      if (typeof mqtt !== 'undefined') {
+        try {
+          if (mqttClient) {
+            mqttClient.end(true);
+          }
+          mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+            clientId: 'sb_' + Math.random().toString(16).slice(2, 10),
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 5000
+          });
+          mqttClient.on('connect', function() {
+            const topic = 'syncbloom/couples/v4/' + cleanCode;
+            mqttClient.subscribe(topic);
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+            const detail = document.getElementById('modalSyncStatusDetail');
+            if (detail) detail.textContent = '🟢 Connected to 2-Phone Cloud Relay (' + cleanCode + ')';
+          });
+          mqttClient.on('message', function(topic, payload) {
+            try {
+              const incoming = JSON.parse(payload.toString());
+              if (incoming && incoming.lastUpdatedBy !== clientInstanceId) {
+                if ((incoming.updatedAtMs || 0) >= (appState.updatedAtMs || 0)) {
+                  appState = incoming;
+                  ensureStatsObject();
+                  try {
+                    localStorage.setItem('syncbloom_state_v2_' + cleanCode, JSON.stringify(appState));
+                  } catch (e) {}
+                  renderAll();
+                  if (incoming.lastEventBanner) {
+                    playSound('spark');
+                    showToast('📲 Partner Phone: ' + incoming.lastEventBanner, 'spark');
+                  }
+                }
+              }
+            } catch (err) {}
+          });
+        } catch (e) {}
+      }
+    }
+
+    function applyRoomCode() {
+      const inp = document.getElementById('roomCodeInput');
+      const dayInp = document.getElementById('setupCycleDayInput');
+      const lenInp = document.getElementById('setupCycleLenInput');
+      if (!inp) return;
+      const code = inp.value.trim().toUpperCase() || 'LUNA-42';
+      inp.value = code;
+      const desiredLen = (lenInp && !isNaN(parseInt(lenInp.value, 10))) ? Math.min(35, Math.max(21, parseInt(lenInp.value, 10))) : (appState.cycleLength || 28);
+      const desiredDay = (dayInp && !isNaN(parseInt(dayInp.value, 10))) ? Math.min(desiredLen, Math.max(1, parseInt(dayInp.value, 10))) : (appState.cycleDay || 1);
+      try {
+        const existingRoomData = localStorage.getItem('syncbloom_state_v2_' + code);
+        if (existingRoomData) {
+          appState = Object.assign(createFreshState(code, appState.herName, appState.hisName, desiredDay, desiredLen), JSON.parse(existingRoomData));
+          appState.cycleDay = desiredDay;
+          appState.cycleLength = desiredLen;
+        } else {
+          appState = createFreshState(code, appState.herName, appState.hisName, desiredDay, desiredLen);
+        }
+      } catch (e) {
+        appState = createFreshState(code, appState.herName, appState.hisName, desiredDay, desiredLen);
+      }
+      ensureDayRecord(appState.cycleDay);
+      connectRealtimeRoom(code);
+      saveAndBroadcast('Paired to Room ' + code + ' (Day ' + appState.cycleDay + ')');
+      showToast('🔗 Switched to Couple Room ' + code + ' (Day ' + appState.cycleDay + ')!', 'success');
+      renderAll();
+    }
+
+    function generateNewRoomCode() {
+      const words = ['LUNA', 'STAR', 'NOVA', 'ROSE', 'GLOW', 'FIRE'];
+      const w = words[Math.floor(Math.random() * words.length)];
+      const num = Math.floor(10 + Math.random() * 89);
+      const code = w + '-' + num;
+      const inp = document.getElementById('roomCodeInput');
+      if (inp) inp.value = code;
+      applyRoomCode();
+    }
+
+    function copyRoomCode() {
+      const code = appState.roomCode;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code);
+        } else {
+          const temp = document.createElement('input');
+          temp.value = code;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+        }
+      } catch (e) {
+        const temp = document.createElement('input');
+        temp.value = code;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      showToast('📋 Copied Room Code: ' + code, 'success');
+    }
+
+    function savePartnerNamesAndClose() {
+      const herInp = document.getElementById('herNameInput');
+      const hisInp = document.getElementById('hisNameInput');
+      const roomInp = document.getElementById('roomCodeInput');
+      const dayInp = document.getElementById('setupCycleDayInput');
+      const lenInp = document.getElementById('setupCycleLenInput');
+
+      const newRoom = (roomInp && roomInp.value.trim()) ? roomInp.value.trim().toUpperCase() : appState.roomCode;
+      const roomChanged = newRoom !== appState.roomCode.toUpperCase();
+
+      if (roomChanged) {
+        try {
+          const existingRoomData = localStorage.getItem('syncbloom_state_v2_' + newRoom);
+          if (existingRoomData) {
+            appState = Object.assign(createFreshState(newRoom, appState.herName, appState.hisName, 1, 28), JSON.parse(existingRoomData));
+          } else {
+            appState = createFreshState(newRoom, appState.herName, appState.hisName, 1, 28);
+          }
+        } catch (e) {
+          appState = createFreshState(newRoom, appState.herName, appState.hisName, 1, 28);
+        }
+      }
+
+      if (herInp && herInp.value.trim()) appState.herName = herInp.value.trim();
+      if (hisInp && hisInp.value.trim()) appState.hisName = hisInp.value.trim();
+      if (lenInp && !isNaN(parseInt(lenInp.value, 10))) {
+        appState.cycleLength = Math.min(35, Math.max(21, parseInt(lenInp.value, 10)));
+      }
+      if (dayInp && !isNaN(parseInt(dayInp.value, 10))) {
+        const targetDay = Math.min(appState.cycleLength, Math.max(1, parseInt(dayInp.value, 10)));
+        appState.cycleDay = targetDay;
+        const rec = ensureDayRecord(targetDay);
+        const phase = getPhaseForDay(targetDay);
+        if (!rec.validated) {
+          appState.herDrive = phase.predictedDrive;
+        }
+      }
+
+      connectRealtimeRoom(newRoom);
+      saveAndBroadcast('Updated couple profile & cycle settings');
+      closeModal('syncModal');
+      playSound('validate');
+      renderAll();
+      showToast('✨ Couple profile, cycle day & room synced!', 'success');
+    }
+
+    // -----------------------------------------------------------------------
+    // 10. COMPLETE UI RENDERING ENGINE
+    // -----------------------------------------------------------------------
+    function renderAll() {
+      const day = appState.cycleDay;
+      const phase = getPhaseForDay(day);
+      const rec = ensureDayRecord(day);
+
+      // 1. Top Bar & HUD
+      const neededXp = getXpRequiredForNextLevel();
+      const lvlBadge = document.getElementById('coupleLevelBadge');
+      if (lvlBadge) lvlBadge.textContent = 'LVL ' + appState.coupleLevel + ' COUPLE';
+      const xpBar = document.getElementById('xpProgressBar');
+      if (xpBar) xpBar.style.width = Math.min(100, Math.round((appState.coupleXp / neededXp) * 100)) + '%';
+      const xpLabel = document.getElementById('xpTextLabel');
+      if (xpLabel) xpLabel.textContent = appState.coupleXp + ' / ' + neededXp + ' XP';
+      const streakEl = document.getElementById('streakBadge');
+      if (streakEl) streakEl.textContent = '🔥 ' + appState.streakDays + 'd';
+
+      const syncModalEl = document.getElementById('syncModal');
+      const isSyncModalHidden = !syncModalEl || syncModalEl.classList.contains('hidden');
+      if (isSyncModalHidden) {
+        const setupDayEl = document.getElementById('setupCycleDayInput');
+        if (setupDayEl) setupDayEl.value = appState.cycleDay;
+        const setupLenEl = document.getElementById('setupCycleLenInput');
+        if (setupLenEl) setupLenEl.value = appState.cycleLength;
+      }
+
+      const syncText = document.getElementById('syncStatusText');
+      if (syncText) syncText.textContent = 'Room: ' + appState.roomCode;
+
+      // Mode Switcher Buttons & Phone Visibility
+      const btnHer = document.getElementById('modeBtnHer');
+      const btnHis = document.getElementById('modeBtnHis');
+      const btnSplit = document.getElementById('modeBtnSplit');
+      const herContainer = document.getElementById('herPhoneContainer');
+      const hisContainer = document.getElementById('hisPhoneContainer');
+      const phonesGrid = document.getElementById('phonesGrid');
+
+      const activeHerClass = 'game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/30';
+      const activeHisClass = 'game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-md shadow-sky-500/30';
+      const activeSplitClass = 'game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition bg-gradient-to-r from-purple-500 to-amber-500 text-white shadow-md shadow-purple-500/30';
+      const inactiveClass = 'game-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition text-slate-300 hover:text-white';
+
+      if (btnHer) btnHer.className = uiRole === 'her' ? activeHerClass : inactiveClass;
+      if (btnHis) btnHis.className = uiRole === 'his' ? activeHisClass : inactiveClass;
+      if (btnSplit) btnSplit.className = uiRole === 'split' ? activeSplitClass : inactiveClass;
+
+      if (uiRole === 'her') {
+        herContainer.classList.remove('hidden');
+        hisContainer.classList.add('hidden');
+        phonesGrid.className = 'grid grid-cols-1 max-w-2xl mx-auto gap-6 items-start';
+      } else if (uiRole === 'his') {
+        herContainer.classList.add('hidden');
+        hisContainer.classList.remove('hidden');
+        phonesGrid.className = 'grid grid-cols-1 max-w-2xl mx-auto gap-6 items-start';
+      } else {
+        herContainer.classList.remove('hidden');
+        hisContainer.classList.remove('hidden');
+        phonesGrid.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6 items-start';
+      }
+
+      // Global Cycle Bar & Dynamic Day Selectors
+      const globalSummary = document.getElementById('globalCycleSummary');
+      if (globalSummary) {
+        globalSummary.textContent = 'Day ' + day + ' of ' + appState.cycleLength + ' • ' + phase.name + ' (' + phase.emoji + ')';
+      }
+      const maxCycleDays = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+      const buildDayOptionsHtml = (includePhaseName) => {
+        let opts = '';
+        for (let d = 1; d <= maxCycleDays; d++) {
+          const p = getPhaseForDay(d);
+          const sel = d === day ? ' selected' : '';
+          const label = includePhaseName
+            ? ('Day ' + d + ' of ' + maxCycleDays + ' — ' + p.name + ' ' + p.emoji)
+            : ('Day ' + d + ' ' + p.emoji);
+          opts += '<option value="' + d + '"' + sel + '>' + label + '</option>';
+        }
+        return opts;
+      };
+      const topDaySel = document.getElementById('topCycleDaySelect');
+      if (topDaySel) {
+        topDaySel.innerHTML = buildDayOptionsHtml(false);
+        topDaySel.value = String(day);
+      }
+      const herDaySel = document.getElementById('herCycleDaySelect');
+      if (herDaySel) {
+        herDaySel.innerHTML = buildDayOptionsHtml(true);
+        herDaySel.value = String(day);
+      }
+      const herDaySlider = document.getElementById('herCycleDaySlider');
+      if (herDaySlider) {
+        herDaySlider.max = String(maxCycleDays);
+        herDaySlider.value = String(day);
+      }
+      const herDateInp = document.getElementById('herLastPeriodDateInput');
+      if (herDateInp && appState.lastPeriodStartDate && document.activeElement !== herDateInp) {
+        herDateInp.value = appState.lastPeriodStartDate;
+      }
+      const globalValBadge = document.getElementById('globalValidationBadge');
+      if (globalValBadge) {
+        if (rec.validated) {
+          globalValBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+          globalValBadge.textContent = '✅ Validated by ' + appState.herName + ' (' + (rec.validatedAt || 'Today') + ')';
+        } else {
+          globalValBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40';
+          globalValBadge.textContent = '🔮 Auto-Predicted (Awaiting ' + appState.herName + '\'s Daily Validation)';
+        }
+      }
+
+      // Partner Names
+      const herNameDisp = document.getElementById('herNameDisplay');
+      if (herNameDisp) herNameDisp.textContent = appState.herName + '\'s Sanctuary';
+      const hisNameDisp = document.getElementById('hisNameDisplay');
+      if (hisNameDisp) hisNameDisp.textContent = appState.hisName + '\'s Co-Pilot';
+
+      // Sub-tabs visibility
+      document.getElementById('herViewCycle').classList.toggle('hidden', herSubTab !== 'cycle');
+      document.getElementById('herViewSpark').classList.toggle('hidden', herSubTab !== 'spark');
+      document.getElementById('herTabBtnCycle').className = herSubTab === 'cycle'
+        ? 'game-btn px-2.5 py-1 rounded-lg font-semibold bg-pink-500 text-white'
+        : 'game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white';
+      document.getElementById('herTabBtnSpark').className = herSubTab === 'spark'
+        ? 'game-btn px-2.5 py-1 rounded-lg font-semibold bg-pink-500 text-white flex items-center gap-1'
+        : 'game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white flex items-center gap-1';
+
+      document.getElementById('hisViewRadar').classList.toggle('hidden', hisSubTab !== 'radar');
+      document.getElementById('hisViewSpark').classList.toggle('hidden', hisSubTab !== 'spark');
+      document.getElementById('hisTabBtnRadar').className = hisSubTab === 'radar'
+        ? 'game-btn px-2.5 py-1 rounded-lg font-semibold bg-sky-500 text-white'
+        : 'game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white';
+      document.getElementById('hisTabBtnSpark').className = hisSubTab === 'spark'
+        ? 'game-btn px-2.5 py-1 rounded-lg font-semibold bg-sky-500 text-white flex items-center gap-1'
+        : 'game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white flex items-center gap-1';
+
+      // ---------------------------------------------------------------------
+      // RENDER HER CYCLE & VALIDATION VIEW
+      // ---------------------------------------------------------------------
+      document.getElementById('herPhaseEmoji').textContent = phase.emoji;
+      document.getElementById('herPhaseName').textContent = phase.name + ' • Day ' + day;
+      document.getElementById('herPhaseHeadline').textContent = phase.herHeadline;
+      document.getElementById('herPhaseDescription').textContent = phase.herDesc;
+      document.getElementById('herRingDayNum').textContent = 'D' + day;
+      document.getElementById('herRingFertility').textContent = phase.fertility;
+      const daysLeft = (appState.cycleLength - day) + 1;
+      document.getElementById('herNextPeriodCountdown').textContent = 'Next period in ' + daysLeft + 'd';
+      const arcOffset = Math.round(201 - (day / appState.cycleLength) * 201);
+      document.getElementById('herCycleRingArc').setAttribute('stroke-dashoffset', String(arcOffset));
+
+      document.getElementById('herEstrogenVal').textContent = phase.estrogen + '%';
+      document.getElementById('herEstrogenBar').style.width = phase.estrogen + '%';
+      document.getElementById('herProgVal').textContent = phase.progesterone + '%';
+      document.getElementById('herProgBar').style.width = phase.progesterone + '%';
+      document.getElementById('herEnergyVal').textContent = phase.energy + '%';
+      document.getElementById('herEnergyBar').style.width = phase.energy + '%';
+
+      const herValPill = document.getElementById('herValidationPill');
+      const valBtnIcon = document.getElementById('validateBtnIcon');
+      const valBtnText = document.getElementById('validateBtnText');
+      if (rec.validated) {
+        herValPill.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+        herValPill.textContent = 'Validated Today ✓';
+        valBtnIcon.textContent = '✨';
+        valBtnText.textContent = 'Validated & Synced to ' + appState.hisName + ' (Tap to Re-Sync)';
+      } else {
+        herValPill.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40';
+        herValPill.textContent = 'Needs Daily Validation';
+        valBtnIcon.textContent = '✅';
+        valBtnText.textContent = 'Validate Today\'s Predictions & Auto-Sync (+50 XP)';
+      }
+
+      // Render Her Mood Chips
+      const moodCont = document.getElementById('herMoodChipsContainer');
+      moodCont.innerHTML = ALL_MOODS.map((m, idx) => {
+        const active = rec.mood === m;
+        const cls = active
+          ? 'bg-pink-500 text-white border-pink-300 shadow-md shadow-pink-500/30'
+          : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10';
+        return `<button onclick="selectHerMood('${m.replace(/'/g, "\\'")}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border ${cls}">${m}</button>`;
+      }).join('');
+
+      // Render Her Craving Chips
+      const craveCont = document.getElementById('herCravingChipsContainer');
+      craveCont.innerHTML = ALL_CRAVINGS.map(c => {
+        const active = rec.cravings.includes(c);
+        const claimed = rec.claimedCravings && rec.claimedCravings[c];
+        const cls = active
+          ? 'bg-amber-500/30 text-amber-100 border-amber-400 shadow-sm'
+          : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10';
+        const badge = claimed ? `<span class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500 text-slate-950 text-[10px] font-extrabold">He's On It!</span>` : '';
+        return `<button onclick="toggleHerCraving('${c.replace(/'/g, "\\'")}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1 ${cls}"><span>${c}</span>${badge}</button>`;
+      }).join('');
+
+      // Render Her Symptom Chips
+      const sympCont = document.getElementById('herSymptomChipsContainer');
+      sympCont.innerHTML = ALL_SYMPTOMS.map(s => {
+        const active = rec.symptoms.includes(s);
+        const cls = active
+          ? 'bg-purple-500/35 text-purple-100 border-purple-400 shadow-sm'
+          : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10';
+        return `<button onclick="toggleHerSymptom('${s.replace(/'/g, "\\'")}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border ${cls}">${s}</button>`;
+      }).join('');
+
+      // Render Boyfriend's Quest Progress on Her Phone
+      const questsDoneCount = phase.boyfriendQuests.filter(q => rec.completedQuests && rec.completedQuests[q.id]).length;
+      document.getElementById('herBoyfriendQuestProgress').textContent = questsDoneCount + '/' + phase.boyfriendQuests.length + ' Done by ' + appState.hisName;
+      document.getElementById('herPartnerQuestsPreview').innerHTML = phase.boyfriendQuests.map(q => {
+        const done = rec.completedQuests && rec.completedQuests[q.id];
+        return `<div class="flex items-center justify-between p-2.5 rounded-xl bg-black/25 border ${done ? 'border-emerald-500/40 text-emerald-200' : 'border-white/5 text-slate-300'}">
+          <span class="flex items-center gap-2"><span>${done ? '✅' : '⏳'}</span><span>${q.title}</span></span>
+          <span class="text-[10px] font-bold text-amber-300">+${q.xp} XP</span>
+        </div>`;
+      }).join('');
+
+      // ---------------------------------------------------------------------
+      // RENDER HIS RADAR & CRAVINGS VIEW
+      // ---------------------------------------------------------------------
+      document.getElementById('hisPhaseEmoji').textContent = phase.emoji;
+      document.getElementById('hisPhaseTitle').textContent = appState.herName + '\'s Cycle: Day ' + day + ' • ' + phase.name;
+      const hisValBadge = document.getElementById('hisValidationStatusBadge');
+      if (rec.validated) {
+        hisValBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+        hisValBadge.textContent = '✅ Validated by ' + appState.herName + ' Today';
+      } else {
+        hisValBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/40';
+        hisValBadge.textContent = '🔮 Smart Prediction (Pre-Validation)';
+      }
+
+      document.getElementById('hisInsightHeadline').textContent = phase.hisHeadline;
+      document.getElementById('hisInsightBriefing').textContent = phase.hisBriefing;
+      document.getElementById('hisReadoutMood').textContent = rec.mood;
+      document.getElementById('hisReadoutDrive').textContent = '🔥 ' + appState.herDrive + '% Drive';
+      document.getElementById('hisReadoutSensitivity').textContent = phase.sensitivity;
+
+      // Render Her Cravings on His Phone
+      const hisCraveCont = document.getElementById('hisCravingsList');
+      if (rec.cravings.length === 0) {
+        hisCraveCont.innerHTML = `<span class="text-xs text-slate-400 italic">No cravings logged right now.</span>`;
+      } else {
+        hisCraveCont.innerHTML = rec.cravings.map(c => {
+          const claimed = rec.claimedCravings && rec.claimedCravings[c];
+          const cls = claimed
+            ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+            : 'bg-amber-500/20 border-amber-400/50 text-amber-100 hover:bg-amber-500/30';
+          return `<button onclick="toggleClaimCraving('${c.replace(/'/g, "\\'")}')" class="game-btn px-3 py-2 rounded-2xl border text-xs font-bold flex items-center gap-2 ${cls}">
+            <span>${c}</span>
+            <span class="px-2 py-0.5 rounded-lg text-[10px] ${claimed ? 'bg-emerald-400 text-slate-950 font-extrabold' : 'bg-black/30 text-amber-300'}">${claimed ? '✓ Bringing It!' : 'Tap: I\'m On It! +25 XP'}</span>
+          </button>`;
+        }).join('');
+      }
+
+      // Render Her Symptoms on His Phone
+      const hisSympCont = document.getElementById('hisSymptomsList');
+      hisSympCont.innerHTML = rec.symptoms.map(s => (
+        `<span class="px-2.5 py-1 rounded-xl bg-purple-500/20 border border-purple-400/30 text-purple-200 text-[11px] font-semibold">${s}</span>`
+      )).join('');
+
+      // Render Boyfriend Quests on His Phone
+      document.getElementById('hisQuestCounterBadge').textContent = questsDoneCount + ' / ' + phase.boyfriendQuests.length + ' Completed';
+      document.getElementById('hisQuestsContainer').innerHTML = phase.boyfriendQuests.map(q => {
+        const done = rec.completedQuests && rec.completedQuests[q.id];
+        return `<div onclick="togglePartnerQuest('${q.id}', ${q.xp})" class="cursor-pointer game-btn p-3 rounded-2xl border flex items-center justify-between gap-3 ${done ? 'bg-emerald-500/15 border-emerald-400/50 text-emerald-100' : 'bg-black/30 border-white/10 hover:border-sky-400/40 text-slate-200'}">
+          <div class="flex items-center gap-2.5 text-xs font-semibold">
+            <span class="w-6 h-6 rounded-lg flex items-center justify-center ${done ? 'bg-emerald-400 text-slate-950 font-bold' : 'bg-white/10 text-slate-300'}">${done ? '✓' : '○'}</span>
+            <span class="${done ? 'line-through opacity-80' : ''}">${q.title}</span>
+          </div>
+          <span class="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold text-[11px] whitespace-nowrap">+${q.xp} XP</span>
+        </div>`;
+      }).join('');
+
+      // ---------------------------------------------------------------------
+      // RENDER TWO-WAY SPARK & DESIRE SYNC (BOTH PHONES)
+      // ---------------------------------------------------------------------
+      const synergy = Math.round((appState.herDrive + appState.hisDrive) / 2);
+      const synText = '⚡ ' + synergy + '% Couple Spark';
+      document.getElementById('herSparkSynergyBadge').textContent = synText;
+      document.getElementById('hisSparkSynergyBadge').textContent = synText;
+
+      // Sliders & Labels
+      const herSlider = document.getElementById('herDriveSlider');
+      if (herSlider) herSlider.value = appState.herDrive;
+      document.getElementById('herDriveStatusLabel').textContent = formatDriveTier(appState.herDrive);
+      document.getElementById('herViewOfHisDriveLabel').textContent = formatDriveTier(appState.hisDrive);
+      document.getElementById('herViewOfHisDriveBar').style.width = appState.hisDrive + '%';
+
+      const hisSlider = document.getElementById('hisDriveSlider');
+      if (hisSlider) hisSlider.value = appState.hisDrive;
+      document.getElementById('hisDriveStatusLabel').textContent = formatDriveTier(appState.hisDrive);
+      document.getElementById('hisViewOfHerDriveLabel').textContent = formatDriveTier(appState.herDrive);
+      document.getElementById('hisViewOfHerDriveBar').style.width = appState.herDrive + '%';
+      document.getElementById('hisViewOfHerDriveSource').textContent = rec.validated
+        ? '✅ Validated directly by ' + appState.herName + ' today'
+        : '🔮 Auto-predicted from ' + phase.name + ' (updates live when she adjusts)';
+
+      // Render Preset Desire Decks
+      const renderPresets = (who) => DESIRE_PRESETS.map(p => (
+        `<button onclick="sendPresetDesire('${who}', '${p.id}')" class="game-btn p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${p.emoji}</span>
+            <div>
+              <div class="text-xs font-bold text-white leading-tight">${p.title}</div>
+              <div class="text-[10px] text-slate-400">${p.category} • Tap to send</div>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-amber-300">+30 XP</span>
+        </button>`
+      )).join('');
+      document.getElementById('herDesirePresetsGrid').innerHTML = renderPresets('her');
+      document.getElementById('hisDesirePresetsGrid').innerHTML = renderPresets('his');
+
+      // Render Active Intimate Requests List for Her and Him
+      const renderRequestsFor = (viewer) => {
+        if (appState.intimateRequests.length === 0) {
+          return `<div class="text-xs text-slate-400 italic py-2">No active desire requests yet — send one below!</div>`;
+        }
+        return appState.intimateRequests.map(req => {
+          const isIncoming = req.from !== viewer;
+          const senderName = req.from === 'her' ? appState.herName : appState.hisName;
+          let statusBadge = '';
+          if (req.status === 'accepted') {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-400/40">🔥 MATCHED / ACCEPTED</span>`;
+          } else if (req.status === 'later') {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/30 text-slate-300">⏳ Raincheck</span>`;
+          } else {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/25 text-amber-300 border border-amber-400/40 animate-pulse">⚡ Awaiting Response</span>`;
+          }
+
+          const actionButtons = (isIncoming && req.status === 'pending')
+            ? `<div class="flex items-center gap-2 mt-2.5 pt-2 border-t border-white/10">
+                <button onclick="respondToDesireRequest('${req.id}', 'accepted')" class="game-btn flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-xs font-bold text-slate-950">
+                  🔥 I'm In! Let's Do It (+100 XP)
+                </button>
+                <button onclick="respondToDesireRequest('${req.id}', 'later')" class="game-btn py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200">
+                  ⏳ Later
+                </button>
+              </div>`
+            : '';
+
+          return `<div class="p-3.5 rounded-2xl bg-black/35 border ${isIncoming && req.status === 'pending' ? 'border-amber-400/60' : 'border-white/10'}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">${req.emoji}</span>
+                <div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.2 rounded bg-white/10 ${req.from === 'her' ? 'text-pink-300' : 'text-sky-300'}">${isIncoming ? 'From ' + senderName : 'Sent by You'}</span>
+                    ${statusBadge}
+                  </div>
+                  <div class="text-xs sm:text-sm font-bold text-white mt-1">${req.title}</div>
+                  <div class="text-[11px] text-slate-300 mt-0.5">${req.timing} • ${req.vibe}</div>
+                  ${req.replyNote ? `<div class="text-[11px] text-emerald-300 font-semibold mt-1">💬 "${req.replyNote}"</div>` : ''}
+                </div>
+              </div>
+              <button onclick="deleteDesireRequest('${req.id}')" class="game-btn text-slate-500 hover:text-slate-300 text-xs px-1.5" title="Clear request">✕</button>
+            </div>
+            ${actionButtons}
+          </div>`;
+        }).join('');
+      };
+
+      document.getElementById('herActiveRequestsList').innerHTML = renderRequestsFor('her');
+      document.getElementById('hisActiveRequestsList').innerHTML = renderRequestsFor('his');
+
+      // Render 16 Progressive Achievements with Filter & Progress Bars
+      ensureStatsObject();
+      const filterMap = {
+        all: 'achFilterAll',
+        cycle: 'achFilterCycle',
+        care: 'achFilterCare',
+        spark: 'achFilterSpark',
+        unlocked: 'achFilterUnlocked'
+      };
+      Object.keys(filterMap).forEach(k => {
+        const btn = document.getElementById(filterMap[k]);
+        if (btn) {
+          btn.className = achievementFilter === k
+            ? 'game-btn px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950'
+            : 'game-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white';
+        }
+      });
+
+      const achCont = document.getElementById('achievementsGrid');
+      const unlockedTotal = ACHIEVEMENTS_LIST.filter(a => appState.unlockedAchievements.includes(a.id)).length;
+      document.getElementById('unlockedBadgesCount').textContent = unlockedTotal + ' / ' + ACHIEVEMENTS_LIST.length + ' Unlocked';
+
+      const filteredAch = ACHIEVEMENTS_LIST.filter(a => {
+        if (achievementFilter === 'all') return true;
+        if (achievementFilter === 'unlocked') return appState.unlockedAchievements.includes(a.id);
+        return a.category === achievementFilter;
+      });
+
+      if (filteredAch.length === 0) {
+        achCont.innerHTML = `<div class="col-span-full text-xs text-slate-400 italic py-4 text-center">No badges unlocked in this view yet — keep syncing daily and completing partner quests!</div>`;
+      } else {
+        achCont.innerHTML = filteredAch.map(a => {
+          const isUnl = appState.unlockedAchievements.includes(a.id);
+          const rawProgress = getAchievementMetricValue(a.metric);
+          const clampedProg = Math.min(a.target, rawProgress);
+          const pct = Math.min(100, Math.round((clampedProg / a.target) * 100));
+          return `<div class="p-3.5 rounded-2xl border transition-all ${isUnl ? 'bg-amber-500/15 border-amber-400/50 shadow-md shadow-amber-500/10' : 'bg-black/30 border-white/10 opacity-80'} flex flex-col justify-between gap-2">
+            <div class="flex items-start gap-2.5">
+              <div class="w-10 h-10 rounded-xl ${isUnl ? 'bg-amber-400/20 border border-amber-300/40' : 'bg-black/40 border border-white/5'} flex items-center justify-center text-xl flex-shrink-0">${a.icon}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-1">
+                  <span class="text-[10px] font-bold uppercase tracking-wider ${isUnl ? 'text-amber-300' : 'text-slate-400'}">${a.tier}</span>
+                  <span class="text-[10px] font-extrabold text-emerald-300">+${a.xpReward} XP</span>
+                </div>
+                <div class="text-xs font-bold text-white flex items-center gap-1 mt-0.5">
+                  <span class="truncate">${a.title}</span>
+                  ${isUnl ? '<span class="text-amber-300 font-extrabold">✓</span>' : ''}
+                </div>
+                <div class="text-[11px] text-slate-300 leading-snug mt-0.5">${a.desc}</div>
+              </div>
+            </div>
+            <div class="pt-1">
+              <div class="flex justify-between text-[10px] font-semibold mb-1">
+                <span class="${isUnl ? 'text-amber-300' : 'text-slate-400'}">${isUnl ? 'Unlocked! 🏆' : 'Progress'}</span>
+                <span class="text-slate-200">${clampedProg} / ${a.target}</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div class="h-full ${isUnl ? 'bg-gradient-to-r from-amber-400 to-emerald-400' : 'bg-pink-500/70'} rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Initialize PWA Dynamic Manifest & App Startup
+    function injectDynamicManifest() {
+      try {
+        const manifest = {
+          name: 'SyncBloom — Couples Cycle & Intimacy Sync',
+          short_name: 'SyncBloom',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#0f0a1e',
+          theme_color: '#130d26',
+          orientation: 'portrait'
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
+        document.head.appendChild(link);
+      } catch (e) {}
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      loadSavedState();
+      ensureDayRecord(appState.cycleDay);
+      injectDynamicManifest();
+      connectRealtimeRoom(appState.roomCode);
+      renderAll();
+    });
+  </script>
+</body>
+</html>
