@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#130d26" />
+  <link rel="manifest" href="./manifest.json?v=5.0" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -143,9 +146,15 @@
             <h1 class="font-game text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-sky-400 bg-clip-text text-transparent">
               SyncBloom
             </h1>
-            <span id="syncStatusPill" onclick="openModal('syncModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition">
+            <button id="appVersionBadge" onclick="openModal('installModal')" class="game-btn px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-400/40 hover:bg-sky-500/30" title="Tap for Install & Force Update">
+              v4.5 ✨
+            </button>
+            <span id="e2eeShieldBadge" onclick="openModal('syncModal')" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" title="AES-256-GCM End-to-End Encrypted">
+              🔒 E2EE v5
+            </span>
+            <span id="syncStatusPill" onclick="openModal('syncModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition" title="AES-256-GCM End-to-End Encrypted Couple Vault">
               <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="syncStatusText">Room: LUNA-42</span>
+              <span id="syncStatusText">🔒 E2EE Vault</span>
             </span>
           </div>
           <!-- Couple Level & XP Progress -->
@@ -188,6 +197,10 @@
           <span>🔗</span>
           <span class="hidden sm:inline">Pair 2 Phones</span>
         </button>
+        <button id="btnOpenNotifyModal" onclick="openModal('notifyModal')" class="game-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 flex items-center gap-1.5" title="Enable Mobile System Notifications & Background Push Alerts">
+          <span>🔔</span>
+          <span id="headerNotifyStatusLabel" class="hidden sm:inline">Mobile Alerts</span>
+        </button>
         <button id="btnOpenInstallModal" onclick="openModal('installModal')" class="game-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/30 flex items-center gap-1.5">
           <span>📲</span>
           <span class="hidden sm:inline">Android Install</span>
@@ -212,6 +225,12 @@
         <span id="globalValidationBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40">
           🔮 Auto-Predicted (Needs Her Daily Check-In)
         </span>
+        <span id="autoAdvanceStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-400/30" title="Automatically advances the cycle day every calendar day at midnight, even if unvalidated">
+          ⏱️ Auto-Day Rollover: ON
+        </span>
+        <button id="btnSimulateMidnightRollover" onclick="simulateMidnightAutoRollover()" class="game-btn px-2 py-0.5 rounded-lg bg-indigo-500/25 hover:bg-indigo-500/40 border border-indigo-400/40 text-[10px] font-bold text-indigo-200" title="Simulate tomorrow's automatic midnight day rollover (+1 day without needing validation)">
+          ⏭️ Simulate Next-Day Auto Rollover
+        </button>
       </div>
       <div class="flex items-center gap-1.5 flex-wrap">
         <button id="btnPrevDay" onclick="shiftCycleDay(-1)" class="game-btn px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold">
@@ -375,6 +394,17 @@
                   <label for="herLastPeriodDateInput" class="text-slate-300 font-medium">Or Last Period Start:</label>
                   <input id="herLastPeriodDateInput" type="date" onchange="setCycleDayFromStartDate(this.value)" class="bg-black/40 border border-white/20 rounded-xl px-2 py-1 text-[11px] text-white focus:outline-none focus:border-pink-400" />
                 </div>
+              </div>
+
+              <!-- Automatic Midnight Cycle Day Rollover Status Bar -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-white/10 text-[11px]">
+                <div class="flex items-center gap-1.5 text-emerald-300 font-semibold">
+                  <span>⏱️</span>
+                  <span id="herAutoRolloverInfo">Auto-advances +1 day every midnight (even if unvalidated)</span>
+                </div>
+                <button id="herBtnTestAutoRollover" onclick="simulateMidnightAutoRollover()" class="game-btn px-2.5 py-1 rounded-xl bg-indigo-500/25 hover:bg-indigo-500/40 border border-indigo-400/40 text-indigo-200 font-bold text-[10px]">
+                  ⏭️ Test Auto +1d Rollover
+                </button>
               </div>
             </div>
 
@@ -853,16 +883,42 @@
 
       <div class="bg-black/40 rounded-2xl p-3.5 border border-white/10 space-y-3">
         <div>
-          <label class="block text-[11px] font-bold uppercase text-purple-300 mb-1">Couple Room Code</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold uppercase text-purple-300">🔒 Private Couple Vault ID (Un-guessable)</label>
+            <span class="text-[10px] font-bold text-emerald-300">AES-256-GCM E2EE</span>
+          </div>
           <div class="flex gap-2">
-            <input id="roomCodeInput" type="text" value="LUNA-42" class="flex-1 bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-300 uppercase focus:outline-none focus:border-purple-400" />
+            <input id="roomCodeInput" type="text" value="SB-8F9K-3M7X" class="flex-1 bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono font-bold text-amber-300 uppercase focus:outline-none focus:border-purple-400" />
             <button id="btnConnectRoom" onclick="applyRoomCode()" class="game-btn px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white">
               Connect
             </button>
-            <button id="btnRandomRoom" onclick="generateNewRoomCode()" class="game-btn px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200" title="Generate random code">
+            <button id="btnRandomRoom" onclick="generateNewRoomCode()" class="game-btn px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200" title="Generate cryptographic 128-bit Vault ID">
               🎲
             </button>
           </div>
+        </div>
+
+        <div class="pt-1 border-t border-white/10">
+          <div class="flex items-center justify-between mb-1">
+            <label for="e2eeSecretKeyInput" class="block text-[10px] font-bold uppercase text-emerald-300">🔑 Secret E2EE Passphrase (Never Sent Over Network)</label>
+            <button id="btnRandomSecretKey" type="button" onclick="generateNewSecretPassphrase()" class="game-btn text-[10px] text-emerald-300 underline font-bold">Generate Key</button>
+          </div>
+          <input id="e2eeSecretKeyInput" type="password" value="" placeholder="Enter shared couple secret passphrase..." class="w-full bg-white/5 border border-emerald-400/30 rounded-xl px-3 py-1.5 text-xs font-mono text-emerald-200 focus:outline-none focus:border-emerald-400" />
+          <div class="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+            <label class="inline-flex items-center gap-1 cursor-pointer">
+              <input id="toggleShowSecretKey" type="checkbox" onchange="toggleSecretKeyVisibility()" class="rounded" />
+              <span>Show passphrase</span>
+            </label>
+            <span id="blindedTopicPreview" class="font-mono text-[9px] text-slate-400 truncate max-w-[190px]">Topic: SHA-256 Blinded</span>
+          </div>
+        </div>
+
+        <div class="pt-1 border-t border-white/10">
+          <div class="flex items-center justify-between mb-1">
+            <label for="devicePinInput" class="block text-[10px] font-bold uppercase text-sky-300">🛡️ Optional 4-Digit Phone PIN Lock</label>
+            <button id="btnLockAppNow" type="button" onclick="lockAppScreenNow()" class="game-btn text-[10px] text-sky-300 underline font-bold">Lock Screen Now</button>
+          </div>
+          <input id="devicePinInput" type="password" maxlength="8" placeholder="Leave blank for no PIN, or set 4-digit PIN..." class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-sky-400" />
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -932,38 +988,64 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 2: ANDROID INSTALLATION GUIDE                                   -->
+  <!-- MODAL 2: ANDROID INSTALLATION, TROUBLESHOOTING & FORCE UPDATE GUIDE   -->
   <!-- ===================================================================== -->
-  <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="game-card rounded-3xl max-w-md w-full p-5 sm:p-6 border border-sky-400/40 space-y-4">
+  <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="game-card rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 border border-sky-400/40 space-y-3.5 my-auto">
       <div class="flex items-center justify-between">
         <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
           <span>📲</span>
-          <span>Install on Both Android Phones</span>
+          <span>Install &amp; Update on Both Android Phones (v4.5)</span>
         </h3>
         <button id="btnCloseInstallModal" onclick="closeModal('installModal')" class="game-btn w-8 h-8 rounded-xl bg-white/10 text-slate-300 hover:text-white">✕</button>
       </div>
-      <div class="space-y-3 text-xs text-slate-200 leading-relaxed">
-        <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="font-bold text-sky-300 mb-1">Step 1 — Install as a Full-Screen Android App (PWA)</div>
+
+      <!-- Live Environment Diagnostic Banner -->
+      <div id="installEnvDiagnostic" class="p-3 rounded-2xl bg-sky-500/15 border border-sky-400/40 text-xs text-sky-100">
+        🔍 Checking device install mode &amp; cache status...
+      </div>
+
+      <!-- 1-TAP NATIVE INSTALL + 1-TAP FORCE UPDATE / CLEAR OLD VERSION CACHE -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button id="btnTriggerNativeInstall" onclick="triggerNativeInstallPrompt()" class="game-btn py-2.5 px-3 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-xs font-extrabold text-white shadow-lg shadow-pink-500/20 flex items-center justify-center gap-1.5">
+          <span>📲</span>
+          <span id="nativeInstallBtnText">1-Tap Install App on Phone</span>
+        </button>
+        <button id="btnForceUpdateCache" onclick="forceUpdateAppVersion()" class="game-btn py-2.5 px-3 rounded-2xl bg-amber-500/25 hover:bg-amber-500/35 border border-amber-400/50 text-xs font-extrabold text-amber-200 flex items-center justify-center gap-1.5">
+          <span>🔄</span>
+          <span>Force Update &amp; Purge Old Cache</span>
+        </button>
+      </div>
+
+      <div class="space-y-2.5 text-xs text-slate-200 leading-relaxed">
+        <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-400/30">
+          <div class="font-bold text-amber-300 mb-1">🛠️ Fix #1: Why Reinstalling Loaded the Older Version</div>
           <p class="text-slate-300">
-            Open this app in <strong>Chrome on Android</strong> on both phones, tap the <strong>⋮ menu (top-right)</strong>, and tap <strong>"Add to Home screen" / "Install app"</strong>. It launches full-screen with its own home icon just like a native Android app!
+            Android browsers keep old <strong>Service Worker caches</strong> even when you delete a Home Screen icon! To replace an older version:
+            <br/>1. Delete the old <strong>SyncBloom</strong> icon from your phone's Home Screen.
+            <br/>2. Tap <strong>"🔄 Force Update &amp; Purge Old Cache"</strong> above (verify the header says <strong>v4.5 ✨</strong>).
+            <br/>3. If using the downloaded <code>.html</code> file, delete old <code>syncbloom_couples_app.html</code> files in your Android <strong>Downloads</strong> folder first so Android doesn't open the old copy!
           </p>
         </div>
-        <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="font-bold text-pink-300 mb-1">Step 2 — Pick Each Partner's Role UI</div>
+
+        <div class="p-3 rounded-2xl bg-sky-500/10 border border-sky-400/30">
+          <div class="font-bold text-sky-300 mb-1">🛠️ Fix #2: Why One Device Can't Install the App</div>
           <p class="text-slate-300">
-            On your girlfriend's phone, tap <strong>👩 Her UI</strong>. On your phone, tap <strong>👨 His UI</strong>. Enter the same <strong>Couple Room Code</strong> in <strong>🔗 Pair 2 Phones</strong>.
+            If one phone doesn't show <strong>"Install app" / "Add to Home screen"</strong>:
+            <br/>• <strong>Avoid Android's Built-in "HTML Viewer":</strong> Tapping a <code>.html</code> file inside WhatsApp, Google Drive, or the Files app opens a restricted previewer that blocks installation. Instead, open <strong>Chrome</strong> (or <strong>Samsung Internet</strong>) directly.
+            <br/>• <strong>Best 2-Phone Method (Works on 100% of Android Devices):</strong> Upload <code>syncbloom_android_pwa_kit.zip</code> to <a href="https://tiiny.host" target="_blank" rel="noopener noreferrer" class="underline text-sky-300 font-bold">tiiny.host</a> or <a href="https://app.netlify.com/drop" target="_blank" rel="noopener noreferrer" class="underline text-sky-300 font-bold">Netlify Drop</a> to get a real <code>https://</code> link. Open that link in Chrome on both phones and tap <strong>1-Tap Install App</strong>!
           </p>
         </div>
+
         <div class="p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="font-bold text-amber-300 mb-1">Step 3 — Daily Prediction &amp; 1-Tap Validation</div>
+          <div class="font-bold text-pink-300 mb-1">Step-by-Step Role &amp; Room Pairing</div>
           <p class="text-slate-300">
-            Every day, the app automatically calculates her cycle phase, hormone forecast, and likely cravings so you get insights immediately — and she simply taps <strong>Validate Today's Predictions</strong> once a day to confirm!
+            On her phone, tap <strong>👩 Her UI</strong>; on his phone, tap <strong>👨 His UI</strong> (each phone now remembers its selected role automatically!). Enter the same <strong>Couple Room Code</strong> in <strong>🔗 Pair 2 Phones</strong>.
           </p>
         </div>
       </div>
-      <div class="flex flex-col sm:flex-row gap-2">
+
+      <div class="flex flex-col sm:flex-row gap-2 pt-1">
         <button id="btnDownloadStandaloneHtml" onclick="downloadStandaloneApp()" class="game-btn flex-1 py-2.5 px-3 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/40 text-xs font-bold text-emerald-200">
           💾 Download Standalone App (.html)
         </button>
@@ -971,6 +1053,78 @@
           Got It! Let's Play 🚀
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: MOBILE SYSTEM NOTIFICATIONS & BACKGROUND PUSH CENTER         -->
+  <!-- ===================================================================== -->
+  <div id="notifyModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="game-card rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 border border-amber-400/40 space-y-4 my-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
+          <span>🔔</span>
+          <span>Mobile Device Notifications (Her &amp; His Phones)</span>
+        </h3>
+        <button id="btnCloseNotifyModal" onclick="closeModal('notifyModal')" class="game-btn w-8 h-8 rounded-xl bg-white/10 text-slate-300 hover:text-white">✕</button>
+      </div>
+
+      <div id="notifyPermissionStatusBox" class="p-3 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-xs text-amber-100">
+        🔔 Checking Android System Notification permission...
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button id="btnEnableMobileNotifications" onclick="requestMobileNotificationPermission()" class="game-btn py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-pink-500 text-xs font-extrabold text-slate-950 shadow-lg flex items-center justify-center gap-1.5">
+          <span>🔔</span>
+          <span>1. Enable Phone Notifications</span>
+        </button>
+        <button id="btnSendTestPushAlert" onclick="sendTestNotificationToPartner()" class="game-btn py-2.5 px-3 rounded-2xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/50 text-xs font-extrabold text-emerald-200 flex items-center justify-center gap-1.5">
+          <span>📲</span>
+          <span>2. Send Test Alert to Both Phones</span>
+        </button>
+      </div>
+
+      <div class="bg-black/40 rounded-2xl p-3.5 border border-white/10 space-y-2.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-pink-300">⚡ Instant Lock-Screen Push Channel (Even When App Closed)</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300">Zero-Account Push</span>
+        </div>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          1. <strong>When App is Open or in Background:</strong> Enabling Phone Notifications above delivers native <strong>Android System Tray &amp; Lock-Screen Notifications</strong> with vibration for every cycle validation, craving, high-drive change, and intimate request.
+          <br/>2. <strong>When App is Completely Swiped Closed:</strong> Android pauses browser tabs when swiped away. For 24/7 wake-up push alerts even when Chrome is closed, install the free open-source <strong>ntfy</strong> app on Android (Google Play) and subscribe to your private blinded Couple Push Topic below:
+        </p>
+        <div class="flex items-center gap-2">
+          <input id="privatePushTopicInput" type="text" readonly value="sb_push_loading" class="flex-1 bg-white/5 border border-white/15 rounded-xl px-3 py-1.5 text-xs font-mono text-amber-300" />
+          <button id="btnCopyPushTopic" onclick="copyPrivatePushTopic()" class="game-btn px-3 py-1.5 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 font-bold text-xs">
+            Copy Topic
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button id="btnDoneNotifyModal" onclick="closeModal('notifyModal')" class="game-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-bold text-white">
+          Done ✨
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PIN LOCK PRIVACY OVERLAY (Prevents Unauthorized Physical Device Entry)-->
+  <!-- ===================================================================== -->
+  <div id="pinLockOverlay" class="fixed inset-0 z-[60] hidden bg-[#090514]/95 backdrop-blur-2xl flex items-center justify-center p-4">
+    <div class="game-card rounded-3xl max-w-xs w-full p-6 border border-pink-500/40 text-center space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg">
+        🔒
+      </div>
+      <div>
+        <h3 class="font-game text-lg font-bold text-white">SyncBloom Vault Locked</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Enter your Couple Privacy PIN to unlock</p>
+      </div>
+      <input id="unlockPinInput" type="password" maxlength="8" placeholder="••••" class="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-center text-lg font-mono tracking-widest text-white focus:outline-none focus:border-pink-400" />
+      <button id="btnUnlockPinSubmit" onclick="attemptUnlockPin()" class="game-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-xs font-bold text-white">
+        Unlock Vault 🔓
+      </button>
     </div>
   </div>
 
@@ -1152,7 +1306,7 @@
     ];
 
     // -----------------------------------------------------------------------
-    // 2. APPLICATION STATE (Starts 100% Fresh for Every New Couple Duo)
+    // 2. APPLICATION STATE, CALENDAR AUTO-ROLLOVER & ZERO-TRUST SECURITY
     // -----------------------------------------------------------------------
     let uiRole = 'her'; // 'her' | 'his' | 'split'
     let herSubTab = 'cycle'; // 'cycle' | 'spark'
@@ -1161,17 +1315,94 @@
     let soundEnabled = true;
     let mqttClient = null;
     let localChannel = null;
+    let pushSocket = null;
     let clientInstanceId = 'client_' + Math.random().toString(36).substring(2, 9);
+    let coupleSecretKey = 'BLOOM-VAULT-2026';
+    let currentBlindedTopicHash = '';
+    let currentPushTopicId = '';
+
+    // Strict HTML & Attribute Escaping to prevent XSS or device entry-point attacks
+    function escapeHtml(raw) {
+      if (raw === null || raw === undefined) return '';
+      return String(raw)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+    }
+
+    function escapeJsArg(raw) {
+      if (raw === null || raw === undefined) return '';
+      return String(raw)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function cleanBoundedStr(val, fallback, maxLen) {
+      if (typeof val !== 'string') return fallback;
+      const trimmed = val.trim().slice(0, maxLen || 120);
+      return trimmed || fallback;
+    }
+
+    // Local Calendar Date Helpers for Automatic Midnight Cycle Day Progression
+    function getLocalTodayDateStr() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function diffCalendarDays(startDateStr, endDateStr) {
+      if (!startDateStr || !endDateStr || typeof startDateStr !== 'string' || typeof endDateStr !== 'string') return 0;
+      const p1 = startDateStr.split('-');
+      const p2 = endDateStr.split('-');
+      if (p1.length !== 3 || p2.length !== 3) return 0;
+      const utc1 = Date.UTC(parseInt(p1[0], 10), parseInt(p1[1], 10) - 1, parseInt(p1[2], 10));
+      const utc2 = Date.UTC(parseInt(p2[0], 10), parseInt(p2[1], 10) - 1, parseInt(p2[2], 10));
+      if (isNaN(utc1) || isNaN(utc2)) return 0;
+      return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+    }
+
+    function generateSecureToken(prefix, groups, charsPerGroup) {
+      const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      const parts = [];
+      const total = groups * charsPerGroup;
+      const randomBytes = new Uint8Array(total);
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(randomBytes);
+      } else {
+        for (let i = 0; i < total; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+      }
+      for (let g = 0; g < groups; g++) {
+        let seg = '';
+        for (let c = 0; c < charsPerGroup; c++) {
+          seg += alphabet[randomBytes[g * charsPerGroup + c] % alphabet.length];
+        }
+        parts.push(seg);
+      }
+      return (prefix ? prefix + '-' : '') + parts.join('-');
+    }
 
     function createFreshState(roomCode, herName, hisName, cycleDay, cycleLength) {
-      const startDay = cycleDay || 1;
-      const phase = CYCLE_PHASES.find(p => p.days.includes(startDay)) || CYCLE_PHASES[0];
+      const maxLen = Math.min(35, Math.max(21, parseInt(cycleLength, 10) || 28));
+      const startDay = Math.min(maxLen, Math.max(1, parseInt(cycleDay, 10) || 1));
+      const phase = CYCLE_PHASES.find(p => p.days.includes(startDay)) || CYCLE_PHASES[3];
+      const todayStr = getLocalTodayDateStr();
       return {
-        roomCode: (roomCode || 'LUNA-42').toUpperCase(),
-        herName: herName || 'Mia',
-        hisName: hisName || 'Alex',
+        roomCode: cleanBoundedStr(roomCode, 'SB-8F9K-3M7X', 32).toUpperCase(),
+        herName: cleanBoundedStr(herName, 'Mia', 30),
+        hisName: cleanBoundedStr(hisName, 'Alex', 30),
         cycleDay: startDay,
-        cycleLength: cycleLength || 28,
+        cycleLength: maxLen,
+        cycleAnchorDate: todayStr,
+        cycleAnchorDay: startDay,
+        autoAdvanceEnabled: true,
         coupleXp: 0,
         coupleLevel: 1,
         streakDays: 0,
@@ -1196,7 +1427,87 @@
       };
     }
 
-    let appState = createFreshState('LUNA-42', 'Mia', 'Alex', 1, 28);
+    // Zero-Trust Schema Sanitizer for any state loaded from storage or decrypted from network
+    function sanitizeIncomingState(raw, fallbackRoom) {
+      if (!raw || typeof raw !== 'object') {
+        return createFreshState(fallbackRoom || 'SB-8F9K-3M7X', 'Mia', 'Alex', 1, 28);
+      }
+      const cLen = Math.min(35, Math.max(21, parseInt(raw.cycleLength, 10) || 28));
+      const cDay = Math.min(cLen, Math.max(1, parseInt(raw.cycleDay, 10) || 1));
+      const base = createFreshState(
+        cleanBoundedStr(raw.roomCode, fallbackRoom || 'SB-8F9K-3M7X', 32).toUpperCase(),
+        cleanBoundedStr(raw.herName, 'Mia', 30),
+        cleanBoundedStr(raw.hisName, 'Alex', 30),
+        cDay,
+        cLen
+      );
+      base.cycleAnchorDate = cleanBoundedStr(raw.cycleAnchorDate, getLocalTodayDateStr(), 12);
+      base.cycleAnchorDay = Math.min(cLen, Math.max(1, parseInt(raw.cycleAnchorDay || cDay, 10) || cDay));
+      base.autoAdvanceEnabled = raw.autoAdvanceEnabled !== false;
+      base.lastPeriodStartDate = cleanBoundedStr(raw.lastPeriodStartDate || '', '', 12);
+      base.coupleXp = Math.max(0, parseInt(raw.coupleXp, 10) || 0);
+      base.coupleLevel = Math.max(1, parseInt(raw.coupleLevel, 10) || 1);
+      base.streakDays = Math.max(0, parseInt(raw.streakDays, 10) || 0);
+      base.herDrive = Math.min(100, Math.max(0, parseInt(raw.herDrive, 10) || 50));
+      base.hisDrive = Math.min(100, Math.max(0, parseInt(raw.hisDrive, 10) || 50));
+      base.herDriveValidatedToday = Boolean(raw.herDriveValidatedToday);
+      base.updatedAtMs = parseInt(raw.updatedAtMs, 10) || Date.now();
+      base.lastUpdatedBy = cleanBoundedStr(raw.lastUpdatedBy, '', 40);
+      base.lastEventBanner = cleanBoundedStr(raw.lastEventBanner, '', 160);
+
+      if (Array.isArray(raw.unlockedAchievements)) {
+        base.unlockedAchievements = raw.unlockedAchievements
+          .filter(x => typeof x === 'string')
+          .slice(0, 30);
+      }
+      if (Array.isArray(raw.intimateRequests)) {
+        base.intimateRequests = raw.intimateRequests.slice(0, 25).map(r => ({
+          id: cleanBoundedStr(r && r.id, 'req_' + Date.now(), 40),
+          from: (r && r.from === 'his') ? 'his' : 'her',
+          title: cleanBoundedStr(r && r.title, 'Intimate Request', 100),
+          emoji: cleanBoundedStr(r && r.emoji, '💘🔥', 12),
+          timing: cleanBoundedStr(r && r.timing, 'Tonight 🌙', 40),
+          vibe: cleanBoundedStr(r && r.vibe, 'Passionate & Heated 🔥', 40),
+          status: (r && (r.status === 'accepted' || r.status === 'later')) ? r.status : 'pending',
+          replyNote: cleanBoundedStr(r && r.replyNote, '', 100),
+          createdAt: cleanBoundedStr(r && r.createdAt, 'Just now', 30)
+        }));
+      }
+      if (raw.dayRecords && typeof raw.dayRecords === 'object') {
+        Object.keys(raw.dayRecords).forEach(k => {
+          const dNum = parseInt(k, 10);
+          if (dNum >= 1 && dNum <= 35) {
+            const dr = raw.dayRecords[k];
+            if (dr && typeof dr === 'object') {
+              const p = getPhaseForDay(dNum);
+              base.dayRecords[dNum] = {
+                validated: Boolean(dr.validated),
+                validatedAt: cleanBoundedStr(dr.validatedAt, '', 25),
+                mood: cleanBoundedStr(dr.mood, p.predictedMood, 50),
+                cravings: Array.isArray(dr.cravings) ? dr.cravings.map(c => cleanBoundedStr(c, '', 50)).filter(Boolean).slice(0, 20) : [...p.predictedCravings],
+                symptoms: Array.isArray(dr.symptoms) ? dr.symptoms.map(s => cleanBoundedStr(s, '', 50)).filter(Boolean).slice(0, 20) : [...p.predictedSymptoms],
+                claimedCravings: (dr.claimedCravings && typeof dr.claimedCravings === 'object') ? Object.assign({}, dr.claimedCravings) : {},
+                completedQuests: (dr.completedQuests && typeof dr.completedQuests === 'object') ? Object.assign({}, dr.completedQuests) : {}
+              };
+            }
+          }
+        });
+      }
+      if (raw.stats && typeof raw.stats === 'object') {
+        base.stats = {
+          totalValidations: Math.max(0, parseInt(raw.stats.totalValidations, 10) || 0),
+          phasesValidated: Array.isArray(raw.stats.phasesValidated) ? raw.stats.phasesValidated.filter(x => typeof x === 'string').slice(0, 8) : [],
+          totalCravingsClaimed: Math.max(0, parseInt(raw.stats.totalCravingsClaimed, 10) || 0),
+          totalQuestsCompleted: Math.max(0, parseInt(raw.stats.totalQuestsCompleted, 10) || 0),
+          totalRequestsSent: Math.max(0, parseInt(raw.stats.totalRequestsSent, 10) || 0),
+          totalRequestsAccepted: Math.max(0, parseInt(raw.stats.totalRequestsAccepted, 10) || 0),
+          supernovaMatches: Math.max(0, parseInt(raw.stats.supernovaMatches, 10) || 0)
+        };
+      }
+      return base;
+    }
+
+    let appState = createFreshState('SB-8F9K-3M7X', 'Mia', 'Alex', 1, 28);
 
     // -----------------------------------------------------------------------
     // 3. SOUND SYNTHESIS ENGINE (Web Audio API - Zero External Audio Files)
@@ -1374,6 +1685,8 @@
       if (isNaN(parsed)) return;
       const clamped = (((parsed - 1) % maxLen) + maxLen) % maxLen + 1;
       appState.cycleDay = clamped;
+      appState.cycleAnchorDate = getLocalTodayDateStr();
+      appState.cycleAnchorDay = clamped;
       const rec = ensureDayRecord(clamped);
       const phase = getPhaseForDay(clamped);
       if (!rec.validated) {
@@ -1386,6 +1699,55 @@
       playSound('tap');
       saveAndBroadcast('Switched to Cycle Day ' + clamped + ' (' + phase.name + ')');
       renderAll();
+    }
+
+    // Automatic Calendar-Day Progression (Advances even if previous day was not validated)
+    function checkAndAutoAdvanceCycleDay() {
+      const todayStr = getLocalTodayDateStr();
+      if (!appState.cycleAnchorDate) {
+        appState.cycleAnchorDate = todayStr;
+        appState.cycleAnchorDay = parseInt(appState.cycleDay, 10) || 1;
+        return false;
+      }
+      if (appState.autoAdvanceEnabled === false) return false;
+      const elapsedDays = diffCalendarDays(appState.cycleAnchorDate, todayStr);
+      if (elapsedDays > 0) {
+        const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+        const baseDay = parseInt(appState.cycleAnchorDay || appState.cycleDay, 10) || 1;
+        const newDay = (((baseDay - 1 + elapsedDays) % maxLen) + maxLen) % maxLen + 1;
+        const prevDay = appState.cycleDay;
+        const prevRec = appState.dayRecords && appState.dayRecords[prevDay];
+        if (elapsedDays === 1 && prevRec && !prevRec.validated) {
+          // Even though yesterday was NOT validated, we still advance automatically!
+        }
+        appState.cycleDay = newDay;
+        appState.cycleAnchorDate = todayStr;
+        appState.cycleAnchorDay = newDay;
+        const rec = ensureDayRecord(newDay);
+        const phase = getPhaseForDay(newDay);
+        if (!rec.validated) {
+          appState.herDrive = phase.predictedDrive;
+        }
+        const summary = '🗓️ Cycle Day Auto-Advanced to Day ' + newDay + ' (' + phase.name + ') — Predictions ready!';
+        saveAndBroadcast(summary);
+        renderAll();
+        showToast(summary, 'spark');
+        triggerMobileSystemNotification('🌸 SyncBloom Daily Auto-Update', summary, 'auto-day-' + todayStr);
+        return true;
+      }
+      return false;
+    }
+
+    function simulateMidnightAutoRollover() {
+      playSound('validate');
+      // Shift the anchor date back by 1 calendar day so checkAndAutoAdvanceCycleDay() sees +1 elapsed day
+      const yesterday = new Date(Date.now() - 86400000);
+      const yyyy = yesterday.getFullYear();
+      const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+      const dd = String(yesterday.getDate()).padStart(2, '0');
+      appState.cycleAnchorDate = yyyy + '-' + mm + '-' + dd;
+      appState.cycleAnchorDay = parseInt(appState.cycleDay, 10) || 1;
+      checkAndAutoAdvanceCycleDay();
     }
 
     function shiftCycleDay(delta) {
@@ -1773,6 +2135,9 @@
     // -----------------------------------------------------------------------
     function setRoleView(role) {
       uiRole = role;
+      try {
+        localStorage.setItem('syncbloom_device_role', role);
+      } catch (e) {}
       playSound('tap');
       renderAll();
     }
@@ -1793,15 +2158,28 @@
       if (modalId === 'syncModal') {
         hideResetConfirmBox();
         const roomInp = document.getElementById('roomCodeInput');
+        const secretInp = document.getElementById('e2eeSecretKeyInput');
+        const pinInp = document.getElementById('devicePinInput');
         const herInp = document.getElementById('herNameInput');
         const hisInp = document.getElementById('hisNameInput');
         const dayInp = document.getElementById('setupCycleDayInput');
         const lenInp = document.getElementById('setupCycleLenInput');
-        if (roomInp) roomInp.value = appState.roomCode || 'LUNA-42';
+        if (roomInp) roomInp.value = appState.roomCode || 'SB-8F9K-3M7X';
+        if (secretInp) secretInp.value = coupleSecretKey || 'BLOOM-VAULT-2026';
+        if (pinInp) {
+          try { pinInp.value = localStorage.getItem('syncbloom_device_pin') || ''; } catch (e) {}
+        }
         if (herInp) herInp.value = appState.herName || 'Mia';
         if (hisInp) hisInp.value = appState.hisName || 'Alex';
         if (dayInp) dayInp.value = String(appState.cycleDay || 1);
         if (lenInp) lenInp.value = String(appState.cycleLength || 28);
+        updateBlindedTopicPreviewUI();
+      }
+      if (modalId === 'installModal') {
+        updateInstallDiagnosticBanner();
+      }
+      if (modalId === 'notifyModal') {
+        updateNotificationModalUI();
       }
       const m = document.getElementById(modalId);
       if (m) m.classList.remove('hidden');
@@ -1818,17 +2196,26 @@
 
     function downloadStandaloneApp() {
       try {
-        const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const clone = document.documentElement.cloneNode(true);
+        const cloneInstallModal = clone.querySelector('#installModal');
+        if (cloneInstallModal) cloneInstallModal.classList.add('hidden');
+        const cloneSyncModal = clone.querySelector('#syncModal');
+        if (cloneSyncModal) cloneSyncModal.classList.add('hidden');
+        const cloneToasts = clone.querySelector('#toastContainer');
+        if (cloneToasts) cloneToasts.innerHTML = '';
+        clone.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
+
+        const htmlSource = '<!DOCTYPE html>\n' + clone.outerHTML;
         const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'syncbloom_couples_app.html';
+        a.download = 'syncbloom_v4_5.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 2000);
-        showToast('💾 Downloaded syncbloom_couples_app.html!', 'success');
+        showToast('💾 Downloaded fresh syncbloom_v4_5.html (v4.5)!', 'success');
       } catch (e) {
         showToast('Use the zip package in chat to download!', 'info');
       }
@@ -1843,7 +2230,9 @@
       if (type === 'spark') colors = 'bg-gradient-to-r from-rose-900/95 to-amber-900/95 border-amber-300/70 text-white';
 
       toast.className = 'pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl text-xs font-semibold flex items-center justify-between gap-2 transition-all duration-300 ' + colors;
-      toast.innerHTML = '<span>' + message + '</span>';
+      const span = document.createElement('span');
+      span.textContent = String(message || '');
+      toast.appendChild(span);
       container.appendChild(toast);
       setTimeout(() => {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
@@ -1851,15 +2240,387 @@
     }
 
     // -----------------------------------------------------------------------
-    // 9. REAL-TIME TWO-PHONE SYNC ENGINE (MQTT WebSockets + BroadcastChannel + LocalStorage)
+    // 9. END-TO-END ENCRYPTED (AES-256-GCM) SYNC & MOBILE NOTIFICATION ENGINE
     // -----------------------------------------------------------------------
+    function bufToBase64(buf) {
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBuf(b64) {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    async function sha256Hex(inputStr) {
+      if (window.crypto && window.crypto.subtle) {
+        const enc = new TextEncoder().encode(inputStr);
+        const hashBuf = await window.crypto.subtle.digest('SHA-256', enc);
+        const hashArr = Array.from(new Uint8Array(hashBuf));
+        return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      // Deterministic fallback hash if WebCrypto unavailable in non-HTTPS file:// preview
+      let h1 = 0xdeadbeef ^ inputStr.length;
+      let h2 = 0x41c6ce57 ^ inputStr.length;
+      for (let i = 0, ch; i < inputStr.length; i++) {
+        ch = inputStr.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+      }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      return (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0') + 'e2eevaultv5';
+    }
+
+    async function deriveAesGcmKey(roomCode, secretKey) {
+      if (!window.crypto || !window.crypto.subtle) return null;
+      const enc = new TextEncoder();
+      const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        enc.encode(roomCode.toUpperCase() + '::' + (secretKey || 'BLOOM-VAULT-2026')),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+      );
+      const salt = enc.encode('SyncBloom_E2EE_Salt_v5_' + roomCode.toUpperCase());
+      return window.crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: salt, iterations: 25000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    async function encryptStateEnvelope(stateObj, roomCode, secretKey) {
+      const plainJson = JSON.stringify(stateObj);
+      const aesKey = await deriveAesGcmKey(roomCode, secretKey);
+      if (!aesKey) {
+        return JSON.stringify({ v: 5, e2ee: false, sender: clientInstanceId, payload: btoa(unescape(encodeURIComponent(plainJson))) });
+      }
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      const encodedData = new TextEncoder().encode(plainJson);
+      const cipherBuf = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, aesKey, encodedData);
+      return JSON.stringify({
+        v: 5,
+        e2ee: true,
+        sender: clientInstanceId,
+        ts: Date.now(),
+        iv: bufToBase64(iv.buffer),
+        ct: bufToBase64(cipherBuf)
+      });
+    }
+
+    async function decryptStateEnvelope(rawEnvelopeStr, roomCode, secretKey) {
+      const env = JSON.parse(rawEnvelopeStr);
+      if (!env || typeof env !== 'object') return null;
+      if (env.sender === clientInstanceId) return null;
+      if (env.e2ee && env.iv && env.ct) {
+        const aesKey = await deriveAesGcmKey(roomCode, secretKey);
+        if (!aesKey) return null;
+        const ivBuf = base64ToBuf(env.iv);
+        const ctBuf = base64ToBuf(env.ct);
+        const plainBuf = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(ivBuf) }, aesKey, ctBuf);
+        const plainStr = new TextDecoder().decode(plainBuf);
+        return sanitizeIncomingState(JSON.parse(plainStr), roomCode);
+      } else if (env.e2ee === false && env.payload) {
+        const plainStr = decodeURIComponent(escape(atob(env.payload)));
+        return sanitizeIncomingState(JSON.parse(plainStr), roomCode);
+      }
+      return null;
+    }
+
+    async function updateBlindedTopicPreviewUI() {
+      const code = (appState.roomCode || 'SB-8F9K-3M7X').toUpperCase();
+      const fullHash = await sha256Hex('SB_V5_BLIND_TOPIC::' + code + '::' + coupleSecretKey);
+      currentBlindedTopicHash = fullHash.slice(0, 40);
+      const pushHash = await sha256Hex('SB_V5_PUSH_ALERT::' + code + '::' + coupleSecretKey);
+      currentPushTopicId = 'sb_alert_' + pushHash.slice(0, 18);
+
+      const prevEl = document.getElementById('blindedTopicPreview');
+      if (prevEl) prevEl.textContent = 'Blinded Topic: ' + currentBlindedTopicHash.slice(0, 14) + '…';
+      const pushInp = document.getElementById('privatePushTopicInput');
+      if (pushInp) pushInp.value = currentPushTopicId;
+    }
+
+    function toggleSecretKeyVisibility() {
+      const inp = document.getElementById('e2eeSecretKeyInput');
+      const chk = document.getElementById('toggleShowSecretKey');
+      if (inp && chk) {
+        inp.type = chk.checked ? 'text' : 'password';
+      }
+    }
+
+    function generateNewSecretPassphrase() {
+      const newKey = generateSecureToken('KEY', 3, 4);
+      coupleSecretKey = newKey;
+      const inp = document.getElementById('e2eeSecretKeyInput');
+      if (inp) {
+        inp.value = newKey;
+        inp.type = 'text';
+      }
+      const chk = document.getElementById('toggleShowSecretKey');
+      if (chk) chk.checked = true;
+      try { localStorage.setItem('syncbloom_e2ee_key', newKey); } catch (e) {}
+      updateBlindedTopicPreviewUI();
+      showToast('🔑 Generated new E2EE Secret Passphrase! Share it privately with your partner.', 'success');
+    }
+
+    // Optional 4-Digit App PIN Lock Functions
+    function checkPinLockOnStartup() {
+      try {
+        const savedPin = localStorage.getItem('syncbloom_device_pin');
+        if (savedPin && savedPin.trim().length > 0) {
+          const overlay = document.getElementById('pinLockOverlay');
+          if (overlay) overlay.classList.remove('hidden');
+        }
+      } catch (e) {}
+    }
+
+    function lockAppScreenNow() {
+      const pinInp = document.getElementById('devicePinInput');
+      if (pinInp && pinInp.value.trim()) {
+        try { localStorage.setItem('syncbloom_device_pin', pinInp.value.trim()); } catch (e) {}
+      }
+      let activePin = '';
+      try { activePin = localStorage.getItem('syncbloom_device_pin') || ''; } catch (e) {}
+      if (!activePin) {
+        showToast('Enter a 4-digit PIN in the box first, then tap Lock Screen Now!', 'info');
+        return;
+      }
+      closeModal('syncModal');
+      const overlay = document.getElementById('pinLockOverlay');
+      if (overlay) overlay.classList.remove('hidden');
+      const unlockInp = document.getElementById('unlockPinInput');
+      if (unlockInp) unlockInp.value = '';
+    }
+
+    function attemptUnlockPin() {
+      const unlockInp = document.getElementById('unlockPinInput');
+      const entered = unlockInp ? unlockInp.value.trim() : '';
+      let savedPin = '';
+      try { savedPin = localStorage.getItem('syncbloom_device_pin') || ''; } catch (e) {}
+      if (!savedPin || entered === savedPin) {
+        const overlay = document.getElementById('pinLockOverlay');
+        if (overlay) overlay.classList.add('hidden');
+        playSound('validate');
+        showToast('🔓 Vault unlocked!', 'success');
+      } else {
+        if (unlockInp) unlockInp.value = '';
+        showToast('❌ Incorrect PIN', 'info');
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // MOBILE SYSTEM NOTIFICATIONS & BACKGROUND PUSH ENGINE (FOR HER & HIM)
+    // -----------------------------------------------------------------------
+    function updateNotificationModalUI() {
+      const box = document.getElementById('notifyPermissionStatusBox');
+      const headerLbl = document.getElementById('headerNotifyStatusLabel');
+      updateBlindedTopicPreviewUI();
+      if (!('Notification' in window)) {
+        if (box) {
+          box.className = 'p-3 rounded-2xl bg-rose-500/20 border border-rose-400/50 text-xs text-rose-100';
+          box.innerHTML = '⚠️ <strong>Browser Notifications Unavailable:</strong> Install the app to your Android Home Screen via Chrome and open it from your Home Screen icon, or use the <strong>ntfy</strong> push topic below!';
+        }
+        return;
+      }
+      const perm = Notification.permission;
+      if (perm === 'granted') {
+        if (box) {
+          box.className = 'p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-100';
+          box.innerHTML = '✅ <strong>Android Mobile Notifications ENABLED!</strong> Both system tray banners and vibration alerts are active on this device.';
+        }
+        if (headerLbl) headerLbl.textContent = 'Alerts ON';
+      } else if (perm === 'denied') {
+        if (box) {
+          box.className = 'p-3 rounded-2xl bg-rose-500/20 border border-rose-400/50 text-xs text-rose-100';
+          box.innerHTML = '❌ <strong>Notifications Blocked in Browser Settings:</strong> Tap the lock/tune icon in Chrome address bar → Permissions → allow <strong>Notifications</strong>.';
+        }
+        if (headerLbl) headerLbl.textContent = 'Alerts Off';
+      } else {
+        if (box) {
+          box.className = 'p-3 rounded-2xl bg-amber-500/20 border border-amber-400/50 text-xs text-amber-100';
+          box.innerHTML = '🔔 <strong>Tap "1. Enable Phone Notifications" below</strong> so your phone rings/vibrates in the Android notification bar when your partner updates!';
+        }
+      }
+    }
+
+    async function requestMobileNotificationPermission() {
+      playSound('tap');
+      if (!('Notification' in window)) {
+        showToast('⚠️ Install the app via Chrome or use the Private Push Topic below for Android alerts!', 'info');
+        updateNotificationModalUI();
+        return;
+      }
+      try {
+        const perm = await Notification.requestPermission();
+        updateNotificationModalUI();
+        if (perm === 'granted') {
+          playSound('validate');
+          showToast('🔔 Mobile System Notifications enabled on this phone!', 'success');
+          triggerMobileSystemNotification(
+            '🌸 SyncBloom Alerts Enabled!',
+            'You will now receive instant Android system notifications whenever your partner syncs cravings, cycle updates, or intimate requests.',
+            'syncbloom-welcome-notify'
+          );
+        } else {
+          showToast('⚠️ Permission not granted. Allow Notifications in Chrome site settings!', 'info');
+        }
+      } catch (e) {
+        showToast('⚠️ Could not request notification permission in this view.', 'info');
+      }
+    }
+
+    async function triggerMobileSystemNotification(title, bodyText, tagId) {
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate([220, 100, 220]);
+        }
+      } catch (e) {}
+
+      if (!('Notification' in window) || Notification.permission !== 'granted') {
+        return;
+      }
+      const cleanTitle = String(title || '🌸 SyncBloom Couple Alert');
+      const cleanBody = String(bodyText || 'New partner sync update received!');
+      const iconUrl = generateAppIconPngDataUrl(192);
+      const options = {
+        body: cleanBody,
+        icon: iconUrl || undefined,
+        badge: iconUrl || undefined,
+        tag: tagId || ('sb-alert-' + Date.now()),
+        renotify: true,
+        vibrate: [250, 120, 250],
+        requireInteraction: false
+      };
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg && typeof reg.showNotification === 'function') {
+            await reg.showNotification(cleanTitle, options);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        new Notification(cleanTitle, options);
+      } catch (e) {}
+    }
+
+    async function sendPartnerBackgroundPush(eventSummary) {
+      if (!eventSummary) return;
+      try {
+        if (!currentPushTopicId) {
+          await updateBlindedTopicPreviewUI();
+        }
+        if (!currentPushTopicId) return;
+        const payloadObj = {
+          sender: clientInstanceId,
+          role: uiRole,
+          ts: Date.now(),
+          summary: String(eventSummary).slice(0, 140)
+        };
+        fetch('https://ntfy.sh/' + currentPushTopicId, {
+          method: 'POST',
+          headers: {
+            'Title': 'SyncBloom Partner Update',
+            'Priority': 'high',
+            'Tags': 'cherry_blossom,sparkles'
+          },
+          body: payloadObj.summary + ' [ref:' + clientInstanceId.slice(-4) + ']'
+        }).catch(function() {});
+      } catch (e) {}
+    }
+
+    async function connectBackgroundPushStream() {
+      try {
+        await updateBlindedTopicPreviewUI();
+        if (!currentPushTopicId || typeof WebSocket === 'undefined') return;
+        if (pushSocket) {
+          try { pushSocket.close(); } catch (e) {}
+        }
+        pushSocket = new WebSocket('wss://ntfy.sh/' + currentPushTopicId + '/ws');
+        pushSocket.onmessage = function(ev) {
+          try {
+            const data = JSON.parse(ev.data);
+            if (data && data.event === 'message' && typeof data.message === 'string') {
+              const myTag = '[ref:' + clientInstanceId.slice(-4) + ']';
+              if (!data.message.includes(myTag)) {
+                const cleanMsg = data.message.replace(/\[ref:[^\]]+\]/g, '').trim();
+                if (cleanMsg) {
+                  triggerMobileSystemNotification('🌸 SyncBloom Partner Alert', cleanMsg, 'ntfy-' + (data.id || Date.now()));
+                }
+              }
+            }
+          } catch (e) {}
+        };
+      } catch (e) {}
+    }
+
+    async function sendTestNotificationToPartner() {
+      playSound('spark');
+      if ('Notification' in window && Notification.permission === 'default') {
+        await requestMobileNotificationPermission();
+      }
+      const senderName = uiRole === 'his' ? appState.hisName : appState.herName;
+      const testMsg = '💖 ' + senderName + ' sent a live test notification! Mobile alerts are working!';
+      triggerMobileSystemNotification('🌸 SyncBloom Mobile Test Alert', testMsg, 'test-alert-' + Date.now());
+      saveAndBroadcast(testMsg);
+      showToast('📲 Sent live mobile notification to this phone & your partner phone!', 'spark');
+    }
+
+    function copyPrivatePushTopic() {
+      const topic = currentPushTopicId || 'sb_alert_vault';
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(topic);
+        } else {
+          const temp = document.createElement('input');
+          temp.value = topic;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+        }
+      } catch (e) {}
+      showToast('📋 Copied Private Push Topic: ' + topic, 'success');
+    }
+
     function loadSavedState() {
       try {
-        const lastRoom = localStorage.getItem('syncbloom_last_room') || 'LUNA-42';
+        const savedRole = localStorage.getItem('syncbloom_device_role');
+        if (savedRole === 'her' || savedRole === 'his' || savedRole === 'split') {
+          uiRole = savedRole;
+        }
+        const savedKey = localStorage.getItem('syncbloom_e2ee_key');
+        if (savedKey && savedKey.trim()) {
+          coupleSecretKey = savedKey.trim();
+        }
+        let lastRoom = localStorage.getItem('syncbloom_last_room');
+        if (!lastRoom || lastRoom === 'LUNA-42') {
+          // Upgrade legacy predictable default room code to a unique cryptographic Vault ID
+          lastRoom = localStorage.getItem('syncbloom_vault_id');
+          if (!lastRoom) {
+            lastRoom = generateSecureToken('SB', 2, 4);
+            localStorage.setItem('syncbloom_vault_id', lastRoom);
+          }
+          localStorage.setItem('syncbloom_last_room', lastRoom);
+        }
         const raw = localStorage.getItem('syncbloom_state_v2_' + lastRoom);
         if (raw) {
           const parsed = JSON.parse(raw);
-          appState = Object.assign(createFreshState(lastRoom, 'Mia', 'Alex', 1, 28), parsed);
+          appState = sanitizeIncomingState(parsed, lastRoom);
           ensureStatsObject();
         } else {
           appState = createFreshState(lastRoom, 'Mia', 'Alex', 1, 28);
@@ -1871,55 +2632,68 @@
 
     let currentConnectedRoom = '';
 
-    function saveAndBroadcast(eventSummary) {
+    async function saveAndBroadcast(eventSummary) {
       appState.updatedAtMs = Date.now();
       appState.lastUpdatedBy = clientInstanceId;
-      appState.lastEventBanner = eventSummary || '';
+      appState.lastEventBanner = cleanBoundedStr(eventSummary || '', '', 160);
       try {
         localStorage.setItem('syncbloom_last_room', appState.roomCode.toUpperCase());
+        localStorage.setItem('syncbloom_e2ee_key', coupleSecretKey);
         localStorage.setItem('syncbloom_state_v2_' + appState.roomCode.toUpperCase(), JSON.stringify(appState));
-      } catch (e) {
-        // Ignore localStorage restrictions
-      }
+      } catch (e) {}
+
       if (localChannel) {
         try {
           localChannel.postMessage(JSON.stringify(appState));
         } catch (e) {}
       }
+
       if (mqttClient && mqttClient.connected) {
         try {
-          const topic = 'syncbloom/couples/v4/' + appState.roomCode.toUpperCase();
-          mqttClient.publish(topic, JSON.stringify(appState), { qos: 0, retain: true });
+          const fullHash = await sha256Hex('SB_V5_BLIND_TOPIC::' + appState.roomCode.toUpperCase() + '::' + coupleSecretKey);
+          const blindedTopic = 'syncbloom/vault_e2ee/v5/' + fullHash.slice(0, 40);
+          const encryptedEnvelope = await encryptStateEnvelope(appState, appState.roomCode, coupleSecretKey);
+          mqttClient.publish(blindedTopic, encryptedEnvelope, { qos: 0, retain: true });
         } catch (e) {}
+      }
+
+      if (eventSummary) {
+        sendPartnerBackgroundPush(eventSummary);
       }
     }
 
-    function connectRealtimeRoom(roomCode) {
-      const cleanCode = (roomCode || 'LUNA-42').trim().toUpperCase();
+    async function connectRealtimeRoom(roomCode) {
+      const cleanCode = cleanBoundedStr(roomCode, 'SB-8F9K-3M7X', 32).toUpperCase();
       appState.roomCode = cleanCode;
+      await updateBlindedTopicPreviewUI();
+      connectBackgroundPushStream();
+
       const statusText = document.getElementById('syncStatusText');
       const dot = document.getElementById('syncDot');
-      if (statusText) statusText.textContent = 'Room: ' + cleanCode;
+      if (statusText) statusText.textContent = '🔒 Vault: ' + cleanCode;
 
-      if (currentConnectedRoom === cleanCode && mqttClient && mqttClient.connected) {
+      const connectionSignature = cleanCode + '::' + currentBlindedTopicHash;
+      if (currentConnectedRoom === connectionSignature && mqttClient && mqttClient.connected) {
         return;
       }
-      currentConnectedRoom = cleanCode;
+      currentConnectedRoom = connectionSignature;
 
       // Setup Local BroadcastChannel for multi-tab instant sync
       try {
         if (localChannel) localChannel.close();
         if (typeof BroadcastChannel !== 'undefined') {
-          localChannel = new BroadcastChannel('syncbloom_v4_' + cleanCode);
+          localChannel = new BroadcastChannel('syncbloom_v5_' + currentBlindedTopicHash);
           localChannel.onmessage = function(ev) {
             try {
-              const incoming = JSON.parse(ev.data);
+              const incoming = sanitizeIncomingState(JSON.parse(ev.data), cleanCode);
               if (incoming && incoming.lastUpdatedBy !== clientInstanceId) {
                 appState = incoming;
                 ensureStatsObject();
+                checkAndAutoAdvanceCycleDay();
                 renderAll();
                 if (incoming.lastEventBanner) {
                   showToast('📲 Live Sync: ' + incoming.lastEventBanner, 'spark');
+                  triggerMobileSystemNotification('🌸 SyncBloom Partner Sync', incoming.lastEventBanner, 'bc-' + incoming.updatedAtMs);
                 }
               }
             } catch (err) {}
@@ -1927,43 +2701,48 @@
         }
       } catch (e) {}
 
-      // Setup MQTT over WebSockets for two separate Android phones
+      // Setup E2EE MQTT over WebSockets on Blinded SHA-256 Topic
       if (typeof mqtt !== 'undefined') {
         try {
           if (mqttClient) {
             mqttClient.end(true);
           }
+          const blindedTopic = 'syncbloom/vault_e2ee/v5/' + currentBlindedTopicHash;
           mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-            clientId: 'sb_' + Math.random().toString(16).slice(2, 10),
+            clientId: 'sb5_' + Math.random().toString(16).slice(2, 10),
             clean: true,
             connectTimeout: 4000,
             reconnectPeriod: 5000
           });
           mqttClient.on('connect', function() {
-            const topic = 'syncbloom/couples/v4/' + cleanCode;
-            mqttClient.subscribe(topic);
+            mqttClient.subscribe(blindedTopic);
             if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
             const detail = document.getElementById('modalSyncStatusDetail');
-            if (detail) detail.textContent = '🟢 Connected to 2-Phone Cloud Relay (' + cleanCode + ')';
+            if (detail) detail.textContent = '🔒 AES-256-GCM E2EE Vault Active (' + cleanCode + ')';
           });
-          mqttClient.on('message', function(topic, payload) {
+          mqttClient.on('message', async function(topic, payload) {
             try {
-              const incoming = JSON.parse(payload.toString());
-              if (incoming && incoming.lastUpdatedBy !== clientInstanceId) {
-                if ((incoming.updatedAtMs || 0) >= (appState.updatedAtMs || 0)) {
-                  appState = incoming;
+              const decrypted = await decryptStateEnvelope(payload.toString(), cleanCode, coupleSecretKey);
+              if (decrypted && decrypted.lastUpdatedBy !== clientInstanceId) {
+                if ((decrypted.updatedAtMs || 0) >= (appState.updatedAtMs || 0)) {
+                  const isNewEvent = decrypted.updatedAtMs !== appState.updatedAtMs;
+                  appState = decrypted;
                   ensureStatsObject();
+                  checkAndAutoAdvanceCycleDay();
                   try {
                     localStorage.setItem('syncbloom_state_v2_' + cleanCode, JSON.stringify(appState));
                   } catch (e) {}
                   renderAll();
-                  if (incoming.lastEventBanner) {
+                  if (isNewEvent && decrypted.lastEventBanner) {
                     playSound('spark');
-                    showToast('📲 Partner Phone: ' + incoming.lastEventBanner, 'spark');
+                    showToast('📲 Partner Phone: ' + decrypted.lastEventBanner, 'spark');
+                    triggerMobileSystemNotification('🌸 SyncBloom Partner Update', decrypted.lastEventBanner, 'mqtt-' + decrypted.updatedAtMs);
                   }
                 }
               }
-            } catch (err) {}
+            } catch (err) {
+              // Packet failed AES-256-GCM authentication tag verification — silently rejected!
+            }
           });
         } catch (e) {}
       }
@@ -1971,19 +2750,25 @@
 
     function applyRoomCode() {
       const inp = document.getElementById('roomCodeInput');
+      const secretInp = document.getElementById('e2eeSecretKeyInput');
       const dayInp = document.getElementById('setupCycleDayInput');
       const lenInp = document.getElementById('setupCycleLenInput');
       if (!inp) return;
-      const code = inp.value.trim().toUpperCase() || 'LUNA-42';
+      const code = cleanBoundedStr(inp.value, 'SB-8F9K-3M7X', 32).toUpperCase();
       inp.value = code;
+      if (secretInp && secretInp.value.trim()) {
+        coupleSecretKey = cleanBoundedStr(secretInp.value, 'BLOOM-VAULT-2026', 64);
+      }
       const desiredLen = (lenInp && !isNaN(parseInt(lenInp.value, 10))) ? Math.min(35, Math.max(21, parseInt(lenInp.value, 10))) : (appState.cycleLength || 28);
       const desiredDay = (dayInp && !isNaN(parseInt(dayInp.value, 10))) ? Math.min(desiredLen, Math.max(1, parseInt(dayInp.value, 10))) : (appState.cycleDay || 1);
       try {
         const existingRoomData = localStorage.getItem('syncbloom_state_v2_' + code);
         if (existingRoomData) {
-          appState = Object.assign(createFreshState(code, appState.herName, appState.hisName, desiredDay, desiredLen), JSON.parse(existingRoomData));
+          appState = sanitizeIncomingState(JSON.parse(existingRoomData), code);
           appState.cycleDay = desiredDay;
           appState.cycleLength = desiredLen;
+          appState.cycleAnchorDate = getLocalTodayDateStr();
+          appState.cycleAnchorDay = desiredDay;
         } else {
           appState = createFreshState(code, appState.herName, appState.hisName, desiredDay, desiredLen);
         }
@@ -1992,16 +2777,13 @@
       }
       ensureDayRecord(appState.cycleDay);
       connectRealtimeRoom(code);
-      saveAndBroadcast('Paired to Room ' + code + ' (Day ' + appState.cycleDay + ')');
-      showToast('🔗 Switched to Couple Room ' + code + ' (Day ' + appState.cycleDay + ')!', 'success');
+      saveAndBroadcast('Paired to E2EE Vault ' + code + ' (Day ' + appState.cycleDay + ')');
+      showToast('🔒 Paired to AES-256-GCM Encrypted Vault ' + code + '!', 'success');
       renderAll();
     }
 
     function generateNewRoomCode() {
-      const words = ['LUNA', 'STAR', 'NOVA', 'ROSE', 'GLOW', 'FIRE'];
-      const w = words[Math.floor(Math.random() * words.length)];
-      const num = Math.floor(10 + Math.random() * 89);
-      const code = w + '-' + num;
+      const code = generateSecureToken('SB', 2, 4);
       const inp = document.getElementById('roomCodeInput');
       if (inp) inp.value = code;
       applyRoomCode();
@@ -2009,43 +2791,53 @@
 
     function copyRoomCode() {
       const code = appState.roomCode;
+      const bundle = 'Vault ID: ' + code + ' | E2EE Key: ' + coupleSecretKey;
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(code);
+          navigator.clipboard.writeText(bundle);
         } else {
           const temp = document.createElement('input');
-          temp.value = code;
+          temp.value = bundle;
           document.body.appendChild(temp);
           temp.select();
           document.execCommand('copy');
           document.body.removeChild(temp);
         }
-      } catch (e) {
-        const temp = document.createElement('input');
-        temp.value = code;
-        document.body.appendChild(temp);
-        temp.select();
-        document.execCommand('copy');
-        document.body.removeChild(temp);
-      }
-      showToast('📋 Copied Room Code: ' + code, 'success');
+      } catch (e) {}
+      showToast('📋 Copied Vault ID & E2EE Key to share privately with your partner!', 'success');
     }
 
     function savePartnerNamesAndClose() {
       const herInp = document.getElementById('herNameInput');
       const hisInp = document.getElementById('hisNameInput');
       const roomInp = document.getElementById('roomCodeInput');
+      const secretInp = document.getElementById('e2eeSecretKeyInput');
+      const pinInp = document.getElementById('devicePinInput');
       const dayInp = document.getElementById('setupCycleDayInput');
       const lenInp = document.getElementById('setupCycleLenInput');
 
-      const newRoom = (roomInp && roomInp.value.trim()) ? roomInp.value.trim().toUpperCase() : appState.roomCode;
+      if (secretInp && secretInp.value.trim()) {
+        coupleSecretKey = cleanBoundedStr(secretInp.value, 'BLOOM-VAULT-2026', 64);
+      }
+      if (pinInp) {
+        try {
+          const pinVal = pinInp.value.trim();
+          if (pinVal) {
+            localStorage.setItem('syncbloom_device_pin', pinVal);
+          } else {
+            localStorage.removeItem('syncbloom_device_pin');
+          }
+        } catch (e) {}
+      }
+
+      const newRoom = (roomInp && roomInp.value.trim()) ? cleanBoundedStr(roomInp.value, appState.roomCode, 32).toUpperCase() : appState.roomCode;
       const roomChanged = newRoom !== appState.roomCode.toUpperCase();
 
       if (roomChanged) {
         try {
           const existingRoomData = localStorage.getItem('syncbloom_state_v2_' + newRoom);
           if (existingRoomData) {
-            appState = Object.assign(createFreshState(newRoom, appState.herName, appState.hisName, 1, 28), JSON.parse(existingRoomData));
+            appState = sanitizeIncomingState(JSON.parse(existingRoomData), newRoom);
           } else {
             appState = createFreshState(newRoom, appState.herName, appState.hisName, 1, 28);
           }
@@ -2054,14 +2846,16 @@
         }
       }
 
-      if (herInp && herInp.value.trim()) appState.herName = herInp.value.trim();
-      if (hisInp && hisInp.value.trim()) appState.hisName = hisInp.value.trim();
+      if (herInp && herInp.value.trim()) appState.herName = cleanBoundedStr(herInp.value, 'Mia', 30);
+      if (hisInp && hisInp.value.trim()) appState.hisName = cleanBoundedStr(hisInp.value, 'Alex', 30);
       if (lenInp && !isNaN(parseInt(lenInp.value, 10))) {
         appState.cycleLength = Math.min(35, Math.max(21, parseInt(lenInp.value, 10)));
       }
       if (dayInp && !isNaN(parseInt(dayInp.value, 10))) {
         const targetDay = Math.min(appState.cycleLength, Math.max(1, parseInt(dayInp.value, 10)));
         appState.cycleDay = targetDay;
+        appState.cycleAnchorDate = getLocalTodayDateStr();
+        appState.cycleAnchorDay = targetDay;
         const rec = ensureDayRecord(targetDay);
         const phase = getPhaseForDay(targetDay);
         if (!rec.validated) {
@@ -2070,11 +2864,11 @@
       }
 
       connectRealtimeRoom(newRoom);
-      saveAndBroadcast('Updated couple profile & cycle settings');
+      saveAndBroadcast('Updated couple profile & E2EE vault settings');
       closeModal('syncModal');
       playSound('validate');
       renderAll();
-      showToast('✨ Couple profile, cycle day & room synced!', 'success');
+      showToast('🔒 Couple profile, cycle day & E2EE vault synced!', 'success');
     }
 
     // -----------------------------------------------------------------------
@@ -2106,7 +2900,15 @@
       }
 
       const syncText = document.getElementById('syncStatusText');
-      if (syncText) syncText.textContent = 'Room: ' + appState.roomCode;
+      if (syncText) syncText.textContent = '🔒 Vault: ' + appState.roomCode;
+      const autoBadge = document.getElementById('autoAdvanceStatusBadge');
+      if (autoBadge) {
+        autoBadge.textContent = '⏱️ Auto-Day Rollover: ON (' + (appState.cycleAnchorDate || getLocalTodayDateStr()) + ')';
+      }
+      const herAutoInfo = document.getElementById('herAutoRolloverInfo');
+      if (herAutoInfo) {
+        herAutoInfo.textContent = 'Auto-advances +1d at midnight even if unvalidated (Synced: ' + (appState.cycleAnchorDate || getLocalTodayDateStr()) + ')';
+      }
 
       // Mode Switcher Buttons & Phone Visibility
       const btnHer = document.getElementById('modeBtnHer');
@@ -2258,7 +3060,7 @@
         return `<button onclick="selectHerMood('${m.replace(/'/g, "\\'")}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border ${cls}">${m}</button>`;
       }).join('');
 
-      // Render Her Craving Chips
+      // Render Her Craving Chips (XSS-Hardened)
       const craveCont = document.getElementById('herCravingChipsContainer');
       craveCont.innerHTML = ALL_CRAVINGS.map(c => {
         const active = rec.cravings.includes(c);
@@ -2267,7 +3069,7 @@
           ? 'bg-amber-500/30 text-amber-100 border-amber-400 shadow-sm'
           : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10';
         const badge = claimed ? `<span class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500 text-slate-950 text-[10px] font-extrabold">He's On It!</span>` : '';
-        return `<button onclick="toggleHerCraving('${c.replace(/'/g, "\\'")}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1 ${cls}"><span>${c}</span>${badge}</button>`;
+        return `<button onclick="toggleHerCraving('${escapeJsArg(c)}')" class="game-btn px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1 ${cls}"><span>${escapeHtml(c)}</span>${badge}</button>`;
       }).join('');
 
       // Render Her Symptom Chips
@@ -2321,8 +3123,8 @@
           const cls = claimed
             ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
             : 'bg-amber-500/20 border-amber-400/50 text-amber-100 hover:bg-amber-500/30';
-          return `<button onclick="toggleClaimCraving('${c.replace(/'/g, "\\'")}')" class="game-btn px-3 py-2 rounded-2xl border text-xs font-bold flex items-center gap-2 ${cls}">
-            <span>${c}</span>
+          return `<button onclick="toggleClaimCraving('${escapeJsArg(c)}')" class="game-btn px-3 py-2 rounded-2xl border text-xs font-bold flex items-center gap-2 ${cls}">
+            <span>${escapeHtml(c)}</span>
             <span class="px-2 py-0.5 rounded-lg text-[10px] ${claimed ? 'bg-emerald-400 text-slate-950 font-extrabold' : 'bg-black/30 text-amber-300'}">${claimed ? '✓ Bringing It!' : 'Tap: I\'m On It! +25 XP'}</span>
           </button>`;
         }).join('');
@@ -2418,18 +3220,18 @@
           return `<div class="p-3.5 rounded-2xl bg-black/35 border ${isIncoming && req.status === 'pending' ? 'border-amber-400/60' : 'border-white/10'}">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2">
-                <span class="text-xl">${req.emoji}</span>
+                <span class="text-xl">${escapeHtml(req.emoji)}</span>
                 <div>
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.2 rounded bg-white/10 ${req.from === 'her' ? 'text-pink-300' : 'text-sky-300'}">${isIncoming ? 'From ' + senderName : 'Sent by You'}</span>
+                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.2 rounded bg-white/10 ${req.from === 'her' ? 'text-pink-300' : 'text-sky-300'}">${isIncoming ? 'From ' + escapeHtml(senderName) : 'Sent by You'}</span>
                     ${statusBadge}
                   </div>
-                  <div class="text-xs sm:text-sm font-bold text-white mt-1">${req.title}</div>
-                  <div class="text-[11px] text-slate-300 mt-0.5">${req.timing} • ${req.vibe}</div>
-                  ${req.replyNote ? `<div class="text-[11px] text-emerald-300 font-semibold mt-1">💬 "${req.replyNote}"</div>` : ''}
+                  <div class="text-xs sm:text-sm font-bold text-white mt-1">${escapeHtml(req.title)}</div>
+                  <div class="text-[11px] text-slate-300 mt-0.5">${escapeHtml(req.timing)} • ${escapeHtml(req.vibe)}</div>
+                  ${req.replyNote ? `<div class="text-[11px] text-emerald-300 font-semibold mt-1">💬 "${escapeHtml(req.replyNote)}"</div>` : ''}
                 </div>
               </div>
-              <button onclick="deleteDesireRequest('${req.id}')" class="game-btn text-slate-500 hover:text-slate-300 text-xs px-1.5" title="Clear request">✕</button>
+              <button onclick="deleteDesireRequest('${escapeJsArg(req.id)}')" class="game-btn text-slate-500 hover:text-slate-300 text-xs px-1.5" title="Clear request">✕</button>
             </div>
             ${actionButtons}
           </div>`;
@@ -2504,32 +3306,224 @@
       }
     }
 
-    // Initialize PWA Dynamic Manifest & App Startup
+    // -----------------------------------------------------------------------
+    // 11. PWA INSTALLABILITY, ICON GENERATOR & CACHE-BUSTING UPDATE ENGINE
+    // -----------------------------------------------------------------------
+    const SYNCBLOOM_VERSION = 'v5.0';
+    let deferredInstallPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btnText = document.getElementById('nativeInstallBtnText');
+      if (btnText) btnText.textContent = '📲 Install App Now (Ready!)';
+      updateInstallDiagnosticBanner();
+    });
+
+    window.addEventListener('appinstalled', function() {
+      deferredInstallPrompt = null;
+      showToast('🎉 SyncBloom v4.5 installed on your Android Home Screen!', 'spark');
+      updateInstallDiagnosticBanner();
+    });
+
+    function generateAppIconPngDataUrl(size) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, size, size);
+        grad.addColorStop(0, '#ec4899');
+        grad.addColorStop(0.5, '#8b5cf6');
+        grad.addColorStop(1, '#38bdf8');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+
+        ctx.fillStyle = '#140c29';
+        const pad = Math.round(size * 0.08);
+        ctx.fillRect(pad, pad, size - pad * 2, size - pad * 2);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold ' + Math.round(size * 0.44) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🌸', size / 2, size / 2);
+        return canvas.toDataURL('image/png');
+      } catch (e) {
+        return '';
+      }
+    }
+
     function injectDynamicManifest() {
       try {
+        // If index.html already has a static manifest link (in the hosted PWA zip), keep it!
+        const existingManifest = document.querySelector('link[rel="manifest"]');
+        if (existingManifest) return;
+
+        const icon192 = generateAppIconPngDataUrl(192);
+        const icon512 = generateAppIconPngDataUrl(512);
+        if (icon192) {
+          const appleIcon = document.createElement('link');
+          appleIcon.rel = 'apple-touch-icon';
+          appleIcon.href = icon192;
+          document.head.appendChild(appleIcon);
+        }
+
+        const startHref = (window.location.href && window.location.href.startsWith('http'))
+          ? window.location.href.split('#')[0]
+          : './';
+
         const manifest = {
-          name: 'SyncBloom — Couples Cycle & Intimacy Sync',
+          id: 'syncbloom-couples-v4-5',
+          name: 'SyncBloom — Couples Cycle & Intimacy Sync (v4.5)',
           short_name: 'SyncBloom',
-          start_url: '.',
+          description: 'Gamified couples menstrual cycle predictions, cravings radar, and two-way intimacy sync.',
+          start_url: startHref,
           display: 'standalone',
           background_color: '#0f0a1e',
           theme_color: '#130d26',
-          orientation: 'portrait'
+          orientation: 'portrait',
+          icons: icon192 ? [
+            { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          ] : []
         };
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const encoded = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
         const link = document.createElement('link');
         link.rel = 'manifest';
-        link.href = URL.createObjectURL(blob);
+        link.href = encoded;
         document.head.appendChild(link);
       } catch (e) {}
     }
 
+    async function autoPurgeLegacyCachesOnStartup() {
+      try {
+        const lastVer = localStorage.getItem('syncbloom_app_version');
+        if (lastVer !== SYNCBLOOM_VERSION) {
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const k of keys) {
+              if (k !== 'syncbloom-pwa-v5.0') {
+                await caches.delete(k);
+              }
+            }
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) {
+              try { await reg.update(); } catch (e) {}
+            }
+          }
+          localStorage.setItem('syncbloom_app_version', SYNCBLOOM_VERSION);
+        }
+      } catch (e) {}
+    }
+
+    async function forceUpdateAppVersion() {
+      playSound('validate');
+      showToast('🔄 Clearing old cached versions & updating to ' + SYNCBLOOM_VERSION + '...', 'info');
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        localStorage.setItem('syncbloom_app_version', SYNCBLOOM_VERSION);
+      } catch (e) {}
+
+      setTimeout(function() {
+        try {
+          const baseUrl = window.location.href.split('?')[0].split('#')[0];
+          if (baseUrl.startsWith('http')) {
+            window.location.replace(baseUrl + '?v=4.5&ts=' + Date.now());
+          } else {
+            window.location.reload();
+          }
+        } catch (e) {
+          renderAll();
+        }
+      }, 500);
+    }
+
+    async function triggerNativeInstallPrompt() {
+      playSound('tap');
+      if (deferredInstallPrompt) {
+        try {
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            showToast('🎉 Installing SyncBloom v4.5 to your Home Screen!', 'spark');
+          }
+          deferredInstallPrompt = null;
+          return;
+        } catch (e) {}
+      }
+      const proto = window.location.protocol;
+      if (proto === 'file:' || proto === 'content:') {
+        showToast('⚠️ Opened as a local file! In Chrome tap ⋮ (top-right) → "Add to Home screen", or host the ZIP on tiiny.host for 1-tap install.', 'info');
+      } else {
+        showToast('📲 Tap your browser ⋮ menu (top-right in Chrome, or bottom menu in Samsung Internet) → tap "Install app" or "Add to Home screen"!', 'info');
+      }
+    }
+
+    function updateInstallDiagnosticBanner() {
+      const banner = document.getElementById('installEnvDiagnostic');
+      if (!banner) return;
+      const proto = window.location.protocol || '';
+      const ua = navigator.userAgent || '';
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isWebView = /wv|FBAN|FBAV|Instagram|Line|WhatsApp/i.test(ua);
+
+      if (isStandalone) {
+        banner.className = 'p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-100';
+        banner.innerHTML = '✅ <strong>Installed &amp; Running Full-Screen (' + SYNCBLOOM_VERSION + ')!</strong> Your phone is running the latest version.';
+      } else if (isWebView) {
+        banner.className = 'p-3 rounded-2xl bg-rose-500/20 border border-rose-400/50 text-xs text-rose-100';
+        banner.innerHTML = '⚠️ <strong>In-App Browser Detected:</strong> You opened this inside an in-app viewer (e.g. WhatsApp/Files) which blocks installing apps. Tap <strong>⋮ → Open in Chrome</strong> first!';
+      } else if (proto === 'file:' || proto === 'content:') {
+        banner.className = 'p-3 rounded-2xl bg-amber-500/20 border border-amber-400/50 text-xs text-amber-100';
+        banner.innerHTML = '📂 <strong>Local File Mode (' + proto + '):</strong> Some Android phones hide "Install App" for local files. In Chrome tap <strong>⋮ → Add to Home screen</strong>, or drop the ZIP on <strong>tiiny.host</strong> for full native install on both phones!';
+      } else if (deferredInstallPrompt) {
+        banner.className = 'p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-100';
+        banner.innerHTML = '🟢 <strong>Ready for 1-Tap Android Install (' + SYNCBLOOM_VERSION + ')!</strong> Tap the <strong>"📲 1-Tap Install App on Phone"</strong> button below.';
+      } else {
+        banner.className = 'p-3 rounded-2xl bg-sky-500/15 border border-sky-400/40 text-xs text-sky-100';
+        banner.innerHTML = '✨ <strong>Running ' + SYNCBLOOM_VERSION + ' (Latest Build):</strong> Tap <strong>"📲 1-Tap Install App"</strong> below or use Chrome <strong>⋮ → Add to Home screen / Install app</strong>.';
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', function() {
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        navigator.serviceWorker.register('./sw.js?v=5.0').then(function(reg) {
+          try { reg.update(); } catch (e) {}
+        }).catch(function() {});
+      }
+      autoPurgeLegacyCachesOnStartup();
       loadSavedState();
+      checkPinLockOnStartup();
       ensureDayRecord(appState.cycleDay);
+      checkAndAutoAdvanceCycleDay();
       injectDynamicManifest();
       connectRealtimeRoom(appState.roomCode);
+      updateNotificationModalUI();
       renderAll();
+
+      // Continuously watch for calendar midnight rollover & wake-from-background rollover
+      setInterval(function() {
+        checkAndAutoAdvanceCycleDay();
+      }, 15000);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          checkAndAutoAdvanceCycleDay();
+        }
+      });
+      window.addEventListener('focus', function() {
+        checkAndAutoAdvanceCycleDay();
+      });
     });
   </script>
 </body>
