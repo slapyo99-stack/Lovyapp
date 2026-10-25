@@ -1,7 +1,8 @@
-const CACHE_NAME = 'syncbloom-pwa-v5.0';
+const CACHE_NAME = 'syncbloom-pwa-v6.0';
 const ASSETS = [
   './',
   './index.html',
+  './version.json',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
@@ -28,6 +29,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Always bypass browser HTTP cache (cache: 'no-store') when fetching from GitHub Pages
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
@@ -43,7 +45,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle Background Push & Notification Clicks on Android
 self.addEventListener('push', (event) => {
   let title = '🌸 SyncBloom Partner Alert';
   let body = 'Your partner just synced a new update!';
@@ -75,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if ('focus' in client) return client.focus();
       }
-      if (self.clients.openWindow) return self.clients.openWindow('./index.html?v=5.0');
+      if (self.clients.openWindow) return self.clients.openWindow('./index.html?v=6.0');
     })
   );
 });
