@@ -1,9 +1,9 @@
 {
-  "id": "./?v=6.0",
-  "name": "SyncBloom \u2014 E2EE Couples Cycle & Intimacy Sync (v6.0)",
+  "id": "./?v=6.1",
+  "name": "SyncBloom \u2014 E2EE Couples Cycle & Intimacy Sync (v6.1)",
   "short_name": "SyncBloom",
   "description": "End-to-end encrypted gamified couples cycle tracker, partner insight radar, and two-way intimacy sync.",
-  "start_url": "./index.html?v=6.0",
+  "start_url": "./index.html?v=6.1",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

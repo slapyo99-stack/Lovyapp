@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syncbloom-pwa-v6.0';
+const CACHE_NAME = 'syncbloom-pwa-v6.1';
 const ASSETS = [
   './',
   './index.html',
@@ -76,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if ('focus' in client) return client.focus();
       }
-      if (self.clients.openWindow) return self.clients.openWindow('./index.html?v=6.0');
+      if (self.clients.openWindow) return self.clients.openWindow('./index.html?v=6.1');
     })
   );
 });

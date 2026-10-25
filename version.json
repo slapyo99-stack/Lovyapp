@@ -1,5 +1,6 @@
 {
-  "version": "v6.0",
-  "buildId": "20261025-v6.0-ota",
-  "updatedAt": "2026-10-25T01:30:00Z"
+  "version": "v6.1",
+  "buildId": "20261025-v6.1-oneshot",
+  "buildNumber": 610,
+  "updatedAt": "2026-10-25T02:50:00Z"
 }

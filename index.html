@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#130d26" />
-  <link rel="manifest" href="./manifest.json?v=6.0" />
+  <link rel="manifest" href="./manifest.json?v=6.1" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -149,12 +149,12 @@
             <h1 class="font-game text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-sky-400 bg-clip-text text-transparent">
               SyncBloom
             </h1>
-            <button id="appVersionBadge" onclick="openModal('installModal')" class="game-btn px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 hover:bg-emerald-500/35" title="Running v6.0 — Auto-Updates from GitHub">
-              <span id="liveVersionBadgeText">v6.0 🚀</span>
-              <span class="hidden">v4.5 ✨</span>
+            <button id="appVersionBadge" onclick="openModal('installModal')" class="game-btn px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/25 text-emerald-200 border border-emerald-400/50 hover:bg-emerald-500/35" title="Running v6.1 — Single-Shot Auto-Update per Build">
+              <span id="liveVersionBadgeText">v6.1 🚀</span>
+              <span class="hidden">v6.0 🚀 v4.5 ✨</span>
             </button>
             <span id="e2eeShieldBadge" onclick="openModal('syncModal')" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-400/40" title="AES-256-GCM End-to-End Encrypted">
-              🔒 E2EE v6.0
+              🔒 E2EE v6.1
             </span>
             <span id="syncStatusPill" onclick="openModal('syncModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition" title="AES-256-GCM End-to-End Encrypted Couple Vault">
               <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -999,7 +999,7 @@
       <div class="flex items-center justify-between">
         <h3 class="font-game text-lg font-bold text-white flex items-center gap-2">
           <span>📲</span>
-          <span id="installModalTitleText">Install &amp; GitHub Auto-Update Center (v6.0)</span>
+          <span id="installModalTitleText">Install &amp; GitHub Auto-Update Center (v6.1)</span>
         </h3>
         <button id="btnCloseInstallModal" onclick="closeModal('installModal')" class="game-btn w-8 h-8 rounded-xl bg-white/10 text-slate-300 hover:text-white">✕</button>
       </div>
@@ -1015,7 +1015,7 @@
           <span>📲</span>
           <span id="nativeInstallBtnText">1-Tap Install App on Phone</span>
         </button>
-        <button id="btnForceUpdateCache" onclick="forceUpdateAppVersion()" class="game-btn py-2.5 px-3 rounded-2xl bg-amber-500/25 hover:bg-amber-500/35 border border-amber-400/50 text-xs font-extrabold text-amber-200 flex items-center justify-center gap-1.5">
+        <button id="btnForceUpdateCache" onclick="forceUpdateAppVersion(null, true)" class="game-btn py-2.5 px-3 rounded-2xl bg-amber-500/25 hover:bg-amber-500/35 border border-amber-400/50 text-xs font-extrabold text-amber-200 flex items-center justify-center gap-1.5">
           <span>🔄</span>
           <span>Force Update &amp; Purge Old Cache</span>
         </button>
@@ -1027,7 +1027,7 @@
 
       <div class="space-y-2.5 text-xs text-slate-200 leading-relaxed">
         <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-400/30">
-          <div class="font-bold text-amber-300 mb-1">🚀 Automatic GitHub Deploy Force-Update (v6.0)</div>
+          <div class="font-bold text-amber-300 mb-1">🚀 Single-Shot GitHub Build Auto-Update (v6.1)</div>
           <p class="text-slate-300">
             1. <strong>Automatic GitHub Polling:</strong> Every time you push a new commit to GitHub, all phones automatically check the live GitHub <code>index.html</code> &amp; <code>version.json</code> (bypassing browser cache) on startup, on screen wake, and every 30s — and automatically wipe old caches and reload!
             <br/>2. <strong>Instant Partner OTA Update:</strong> Tap <strong>"🚀 Push Remote Force-Update to Partner's Phone Now"</strong> above to remotely command your partner's open app to clear its cache and reload from GitHub immediately!
@@ -1427,7 +1427,8 @@
           totalRequestsAccepted: 0,
           supernovaMatches: 0
         },
-        appVersion: 'v6.0',
+        appVersion: 'v6.1',
+        appBuildNumber: 610,
         forceUpdateNonce: 0,
         updatedAtMs: Date.now(),
         lastUpdatedBy: clientInstanceId,
@@ -1459,7 +1460,8 @@
       base.herDrive = Math.min(100, Math.max(0, parseInt(raw.herDrive, 10) || 50));
       base.hisDrive = Math.min(100, Math.max(0, parseInt(raw.hisDrive, 10) || 50));
       base.herDriveValidatedToday = Boolean(raw.herDriveValidatedToday);
-      base.appVersion = cleanBoundedStr(raw.appVersion, 'v6.0', 20);
+      base.appVersion = cleanBoundedStr(raw.appVersion, 'v6.1', 20);
+      base.appBuildNumber = parseInt(raw.appBuildNumber, 10) || 600;
       base.forceUpdateNonce = parseInt(raw.forceUpdateNonce, 10) || 0;
       base.updatedAtMs = parseInt(raw.updatedAtMs, 10) || Date.now();
       base.lastUpdatedBy = cleanBoundedStr(raw.lastUpdatedBy, '', 40);
@@ -2260,12 +2262,12 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'syncbloom_v6_0.html';
+        a.download = 'syncbloom_v6_1.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 2000);
-        showToast('💾 Downloaded fresh syncbloom_v6_0.html (v6.0)!', 'success');
+        showToast('💾 Downloaded fresh syncbloom_v6_1.html (v6.1)!', 'success');
       } catch (e) {
         showToast('Use the zip package in chat to download!', 'info');
       }
@@ -2776,10 +2778,23 @@
               if (decrypted && decrypted.lastUpdatedBy !== clientInstanceId) {
                 if ((decrypted.updatedAtMs || 0) >= (appState.updatedAtMs || 0)) {
                   const isNewEvent = decrypted.updatedAtMs !== appState.updatedAtMs;
-                  const prevNonce = appState.forceUpdateNonce || 0;
                   appState = decrypted;
-                  if ((decrypted.forceUpdateNonce && decrypted.forceUpdateNonce > prevNonce && prevNonce > 0) || (decrypted.appVersion && decrypted.appVersion !== SYNCBLOOM_VERSION)) {
-                    forceUpdateAppVersion('🚀 Partner pushed a new GitHub update (' + (decrypted.appVersion || SYNCBLOOM_VERSION) + ')! Updating now...');
+                  try {
+                    localStorage.setItem('syncbloom_state_v2_' + cleanCode, JSON.stringify(appState));
+                  } catch (e) {}
+                  // Single-Shot OTA Guard: Only trigger if nonce was never handled before AND is fresh (<90s old), OR if partner is on a strictly higher build number that we have not yet updated to
+                  const incomingNonce = parseInt(decrypted.forceUpdateNonce, 10) || 0;
+                  const lastHandledNonce = parseInt(localStorage.getItem('syncbloom_last_handled_ota_nonce') || '0', 10);
+                  const isFreshNonce = incomingNonce > lastHandledNonce && Math.abs(Date.now() - incomingNonce) < 90000;
+                  const incomingBuildNum = parseInt(decrypted.appBuildNumber, 10) || 0;
+                  const lastHandledBuildNum = parseInt(localStorage.getItem('syncbloom_last_handled_mqtt_build') || '0', 10);
+                  const isNewerPartnerBuild = incomingBuildNum > SYNCBLOOM_BUILD_NUMBER && incomingBuildNum > lastHandledBuildNum;
+                  if (isFreshNonce || isNewerPartnerBuild) {
+                    try {
+                      if (incomingNonce > 0) localStorage.setItem('syncbloom_last_handled_ota_nonce', String(incomingNonce));
+                      if (incomingBuildNum > 0) localStorage.setItem('syncbloom_last_handled_mqtt_build', String(incomingBuildNum));
+                    } catch (e) {}
+                    forceUpdateAppVersion('🚀 Partner pushed a new GitHub build (' + (decrypted.appVersion || SYNCBLOOM_VERSION) + ')! Updating once...', false);
                     return;
                   }
                   ensureStatsObject();
@@ -3362,15 +3377,25 @@
     }
 
     // -----------------------------------------------------------------------
-    // 11. GITHUB LIVE AUTO-UPDATER, OTA FORCE-UPDATE & PWA ENGINE (v6.0)
+    // 11. SINGLE-SHOT GITHUB AUTO-UPDATER, OTA FORCE-UPDATE & PWA ENGINE (v6.1)
     // -----------------------------------------------------------------------
-    // TIP: When pushing a new commit to GitHub, either bump SYNCBLOOM_VERSION / SYNCBLOOM_BUILD_ID
-    // or simply push index.html — every phone polls GitHub with cache:'no-store' and auto-updates!
-    const SYNCBLOOM_VERSION = 'v6.0';
-    const SYNCBLOOM_BUILD_ID = '20261025-v6.0-ota';
+    // Strictly updates at most ONCE per new build ID or file hash — never loops!
+    const SYNCBLOOM_VERSION = 'v6.1';
+    const SYNCBLOOM_BUILD_ID = '20261025-v6.1-oneshot';
+    const SYNCBLOOM_BUILD_NUMBER = 610;
     let deferredInstallPrompt = null;
     let initialRemoteSignature = null;
     let isForceUpdatingNow = false;
+
+    function computeFastBuildHash(str) {
+      let h = 2166136261;
+      const s = String(str || '');
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16);
+    }
 
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
@@ -3416,7 +3441,6 @@
 
     function injectDynamicManifest() {
       try {
-        // If index.html already has a static manifest link (in the hosted PWA zip), keep it!
         const existingManifest = document.querySelector('link[rel="manifest"]');
         if (existingManifest) return;
 
@@ -3469,13 +3493,20 @@
     async function autoPurgeLegacyCachesOnStartup() {
       try {
         syncVersionLabelsInDOM();
+        // Clean up any temporary cache-busting query string in the address bar without reloading
+        if (window.location.search && (window.location.search.includes('_gh_ts=') || window.location.search.includes('_gh_check='))) {
+          try {
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+          } catch (e) {}
+        }
         const lastVer = localStorage.getItem('syncbloom_app_version');
         const lastBuild = localStorage.getItem('syncbloom_app_build');
         if (lastVer !== SYNCBLOOM_VERSION || lastBuild !== SYNCBLOOM_BUILD_ID) {
           if ('caches' in window) {
             const keys = await caches.keys();
             for (const k of keys) {
-              if (k !== 'syncbloom-pwa-v6.0') {
+              if (k !== 'syncbloom-pwa-v6.1') {
                 await caches.delete(k);
               }
             }
@@ -3488,15 +3519,26 @@
           }
           localStorage.setItem('syncbloom_app_version', SYNCBLOOM_VERSION);
           localStorage.setItem('syncbloom_app_build', SYNCBLOOM_BUILD_ID);
+          localStorage.setItem('syncbloom_last_handled_mqtt_build', String(SYNCBLOOM_BUILD_NUMBER));
         }
       } catch (e) {}
     }
 
-    async function forceUpdateAppVersion(reasonText) {
+    async function forceUpdateAppVersion(reasonText, isManualUserClick) {
       if (isForceUpdatingNow) return;
+      // Cooldown guard for automatic updates: never auto-reload more than once within 45 seconds
+      if (!isManualUserClick) {
+        try {
+          const lastAutoReloadTs = parseInt(sessionStorage.getItem('syncbloom_last_auto_reload_ts') || '0', 10);
+          if (Date.now() - lastAutoReloadTs < 45000) {
+            return;
+          }
+          sessionStorage.setItem('syncbloom_last_auto_reload_ts', String(Date.now()));
+        } catch (e) {}
+      }
       isForceUpdatingNow = true;
       playSound('validate');
-      showToast(reasonText || ('🔄 Clearing old cached versions & force-updating from GitHub (' + SYNCBLOOM_VERSION + ')...'), 'spark');
+      showToast(reasonText || ('🔄 Updating once to latest GitHub build (' + SYNCBLOOM_VERSION + ')...'), 'spark');
       try {
         if ('caches' in window) {
           const keys = await caches.keys();
@@ -3504,7 +3546,9 @@
         }
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
+          await Promise.all(regs.map(r => {
+            try { return r.update(); } catch (e) { return Promise.resolve(); }
+          }));
         }
         localStorage.setItem('syncbloom_app_version', SYNCBLOOM_VERSION);
         localStorage.setItem('syncbloom_app_build', SYNCBLOOM_BUILD_ID);
@@ -3525,7 +3569,7 @@
       }, 450);
     }
 
-    // Automatically polls GitHub Pages / live server with cache:'no-store' to detect any new commit
+    // Polls GitHub Pages with cache:'no-store' and triggers at most ONE update per unique remote build signature
     async function checkRemoteGithubDeployForUpdate() {
       if (isForceUpdatingNow) return;
       if (!window.location.protocol.startsWith('http')) return;
@@ -3543,34 +3587,59 @@
         const remoteHtml = await res.text();
         if (!remoteHtml || remoteHtml.length < 500) return;
 
-        // 1. Check explicit SYNCBLOOM_VERSION or SYNCBLOOM_BUILD_ID in the live GitHub file
         const verMatch = remoteHtml.match(/const\s+SYNCBLOOM_VERSION\s*=\s*['"]([^'"]+)['"]/);
         const buildMatch = remoteHtml.match(/const\s+SYNCBLOOM_BUILD_ID\s*=\s*['"]([^'"]+)['"]/);
+        const buildNumMatch = remoteHtml.match(/const\s+SYNCBLOOM_BUILD_NUMBER\s*=\s*(\d+)/);
+
         const remoteVer = verMatch ? verMatch[1] : SYNCBLOOM_VERSION;
         const remoteBuild = buildMatch ? buildMatch[1] : SYNCBLOOM_BUILD_ID;
+        const remoteBuildNum = buildNumMatch ? parseInt(buildNumMatch[1], 10) : SYNCBLOOM_BUILD_NUMBER;
+        const contentHash = computeFastBuildHash(remoteHtml);
+        const remoteTargetKey = remoteVer + '::' + remoteBuild + '::' + contentHash;
 
-        // 2. Also compute a fast content signature of the live GitHub file so even edits without bumping the version string auto-update!
-        const sig = remoteVer + '::' + remoteBuild + '::' + remoteHtml.length;
+        // First poll after page load establishes the baseline signature of the live server
         if (initialRemoteSignature === null) {
-          initialRemoteSignature = sig;
-          if (remoteVer !== SYNCBLOOM_VERSION || remoteBuild !== SYNCBLOOM_BUILD_ID) {
-            forceUpdateAppVersion('🚀 New GitHub release (' + remoteVer + ') detected! Auto-updating now...');
+          initialRemoteSignature = remoteTargetKey;
+          // Only update on initial load if the server has a strictly newer build ID/number AND we haven't already updated to it
+          const isServerNewer = (remoteBuildNum > SYNCBLOOM_BUILD_NUMBER) || (remoteBuild !== SYNCBLOOM_BUILD_ID && remoteBuildNum >= SYNCBLOOM_BUILD_NUMBER);
+          if (isServerNewer) {
+            const alreadyAppliedKey = localStorage.getItem('syncbloom_completed_update_target');
+            if (alreadyAppliedKey !== remoteTargetKey) {
+              localStorage.setItem('syncbloom_completed_update_target', remoteTargetKey);
+              forceUpdateAppVersion('🚀 New GitHub build (' + remoteVer + ') detected! Updating once...', false);
+            }
+          } else {
+            // Mark current baseline build as already applied so it never loops
+            localStorage.setItem('syncbloom_completed_update_target', remoteTargetKey);
           }
           return;
         }
-        if (sig !== initialRemoteSignature || remoteVer !== SYNCBLOOM_VERSION || remoteBuild !== SYNCBLOOM_BUILD_ID) {
-          forceUpdateAppVersion('🚀 New GitHub commit detected (' + remoteVer + ')! Auto-updating all devices...');
+
+        // Subsequent polls while app is open: only update if the remote signature changed AND we haven't applied it yet
+        if (remoteTargetKey !== initialRemoteSignature) {
+          const alreadyAppliedKey = localStorage.getItem('syncbloom_completed_update_target');
+          initialRemoteSignature = remoteTargetKey;
+          if (alreadyAppliedKey !== remoteTargetKey) {
+            localStorage.setItem('syncbloom_completed_update_target', remoteTargetKey);
+            forceUpdateAppVersion('🚀 New GitHub commit detected (' + remoteVer + ')! Updating once...', false);
+          }
         }
       } catch (e) {}
     }
 
-    // Remotely forces the partner's phone (and all devices in the room) to purge cache & reload from GitHub
+    // Remotely forces the partner's phone (and this phone) to update ONCE to the current build
     function broadcastForceUpdateToAllDevices() {
+      const nonce = Date.now();
       appState.appVersion = SYNCBLOOM_VERSION;
-      appState.forceUpdateNonce = Date.now();
+      appState.appBuildNumber = SYNCBLOOM_BUILD_NUMBER;
+      appState.forceUpdateNonce = nonce;
+      try {
+        localStorage.setItem('syncbloom_last_handled_ota_nonce', String(nonce));
+        localStorage.setItem('syncbloom_last_handled_mqtt_build', String(SYNCBLOOM_BUILD_NUMBER));
+      } catch (e) {}
       saveAndBroadcast('🚀 Force-Updating all paired phones to latest GitHub build (' + SYNCBLOOM_VERSION + ')!');
       setTimeout(function() {
-        forceUpdateAppVersion('🚀 Force-updating this phone & partner phone to latest GitHub build...');
+        forceUpdateAppVersion('🚀 Force-updating this phone & partner phone once to latest GitHub build...', true);
       }, 350);
     }
 
@@ -3605,31 +3674,32 @@
 
       if (isStandalone) {
         banner.className = 'p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-100';
-        banner.innerHTML = '✅ <strong>Installed &amp; Running Full-Screen (' + SYNCBLOOM_VERSION + ')!</strong> Auto-checks GitHub for new commits every 30s.';
+        banner.innerHTML = '✅ <strong>Installed &amp; Running Full-Screen (' + SYNCBLOOM_VERSION + ')!</strong> Single-shot GitHub build auto-update is active.';
       } else if (isWebView) {
         banner.className = 'p-3 rounded-2xl bg-rose-500/20 border border-rose-400/50 text-xs text-rose-100';
         banner.innerHTML = '⚠️ <strong>In-App Browser Detected:</strong> You opened this inside an in-app viewer (e.g. WhatsApp/Files) which blocks installing apps. Tap <strong>⋮ → Open in Chrome</strong> first!';
       } else if (proto === 'file:' || proto === 'content:') {
         banner.className = 'p-3 rounded-2xl bg-amber-500/20 border border-amber-400/50 text-xs text-amber-100';
-        banner.innerHTML = '📂 <strong>Local File Mode (' + proto + '):</strong> Host the ZIP on <strong>GitHub Pages</strong> so every git push automatically force-updates both phones!';
+        banner.innerHTML = '📂 <strong>Local File Mode (' + proto + '):</strong> Host the ZIP on <strong>GitHub Pages</strong> so every git push updates both phones once per build!';
       } else if (deferredInstallPrompt) {
         banner.className = 'p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-100';
         banner.innerHTML = '🟢 <strong>Ready for 1-Tap Android Install (' + SYNCBLOOM_VERSION + ')!</strong> Tap the <strong>"📲 1-Tap Install App on Phone"</strong> button below.';
       } else {
         banner.className = 'p-3 rounded-2xl bg-sky-500/15 border border-sky-400/40 text-xs text-sky-100';
-        banner.innerHTML = '✨ <strong>Running ' + SYNCBLOOM_VERSION + ' (GitHub Auto-Update Active):</strong> Every push to GitHub automatically refreshes connected devices.';
+        banner.innerHTML = '✨ <strong>Running ' + SYNCBLOOM_VERSION + ' (Single-Shot Auto-Update):</strong> Updates strictly once per new GitHub build.';
       }
     }
 
     window.addEventListener('DOMContentLoaded', function() {
       if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        navigator.serviceWorker.register('./sw.js?v=6.0', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('./sw.js?v=6.1', { updateViaCache: 'none' }).then(function(reg) {
           try { reg.update(); } catch (e) {}
         }).catch(function() {});
       }
       autoPurgeLegacyCachesOnStartup();
       loadSavedState();
       appState.appVersion = SYNCBLOOM_VERSION;
+      appState.appBuildNumber = SYNCBLOOM_BUILD_NUMBER;
       checkPinLockOnStartup();
       ensureDayRecord(appState.cycleDay);
       checkAndAutoAdvanceCycleDay();
@@ -3638,23 +3708,12 @@
       updateNotificationModalUI();
       renderAll();
 
-      // Reload automatically if a new Service Worker takes control after a GitHub push
-      if ('serviceWorker' in navigator) {
-        let refreshingSw = false;
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-          if (!refreshingSw && !isForceUpdatingNow) {
-            refreshingSw = true;
-            forceUpdateAppVersion('🚀 Service Worker updated from GitHub! Reloading...');
-          }
-        });
-      }
-
-      // Check GitHub live deployment immediately & every 30s + on app wake
-      setTimeout(checkRemoteGithubDeployForUpdate, 2500);
+      // Check GitHub live deployment once after startup & every 30s + on app wake
+      setTimeout(checkRemoteGithubDeployForUpdate, 3000);
       setInterval(function() {
         checkAndAutoAdvanceCycleDay();
         checkRemoteGithubDeployForUpdate();
-      }, 25000);
+      }, 30000);
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
           checkAndAutoAdvanceCycleDay();
