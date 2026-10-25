@@ -376,7 +376,7 @@
 
               <!-- Interactive Day Scrubber Slider (Days 1 to Cycle Length) -->
               <div>
-                <input id="herCycleDaySlider" type="range" min="1" max="28" value="1" oninput="setCycleDay(this.value)" class="drive-slider" />
+                <input id="herCycleDaySlider" type="range" min="1" max="28" value="1" oninput="previewCycleDaySlider(this.value)" onchange="setCycleDay(this.value)" class="drive-slider" />
                 <div class="flex justify-between text-[10px] text-pink-200/80 mt-1 font-medium">
                   <span>🩸 D1–5 Menstrual</span>
                   <span>🌱 D6–12 Follicular</span>
@@ -546,7 +546,7 @@
                 <span class="text-xs font-bold text-pink-300">👩 Your Current Drive</span>
                 <span id="herDriveStatusLabel" class="text-xs font-extrabold text-amber-300">🔥 80% — High Drive / Frisky</span>
               </div>
-              <input id="herDriveSlider" type="range" min="0" max="100" value="80" oninput="updateDriveLevel('her', this.value)" class="drive-slider" />
+              <input id="herDriveSlider" type="range" min="0" max="100" value="80" oninput="updateDriveLevel('her', this.value, false)" onchange="commitDriveLevel('her', this.value)" class="drive-slider" />
               <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
                 <span>💤 Cuddle Only</span>
                 <span>🌸 Flirty</span>
@@ -768,7 +768,7 @@
                 <span class="text-xs font-bold text-sky-300">👨 Your Current Drive</span>
                 <span id="hisDriveStatusLabel" class="text-xs font-extrabold text-sky-200">🔥 78% — High Drive</span>
               </div>
-              <input id="hisDriveSlider" type="range" min="0" max="100" value="78" oninput="updateDriveLevel('his', this.value)" class="drive-slider" />
+              <input id="hisDriveSlider" type="range" min="0" max="100" value="78" oninput="updateDriveLevel('his', this.value, false)" onchange="commitDriveLevel('his', this.value)" class="drive-slider" />
               <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
                 <span>💤 Recharging</span>
                 <span>🌸 Warm</span>
@@ -1679,6 +1679,20 @@
     // -----------------------------------------------------------------------
     // 5. USER ACTIONS: CYCLE PREDICTION & DAILY VALIDATION
     // -----------------------------------------------------------------------
+    function previewCycleDaySlider(day) {
+      const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
+      const parsed = parseInt(day, 10);
+      if (isNaN(parsed)) return;
+      const clamped = (((parsed - 1) % maxLen) + maxLen) % maxLen + 1;
+      appState.cycleDay = clamped;
+      const rec = ensureDayRecord(clamped);
+      const phase = getPhaseForDay(clamped);
+      if (!rec.validated) {
+        appState.herDrive = phase.predictedDrive;
+      }
+      renderAll();
+    }
+
     function setCycleDay(day) {
       const maxLen = Math.min(35, Math.max(21, parseInt(appState.cycleLength, 10) || 28));
       const parsed = parseInt(day, 10);
@@ -1948,8 +1962,32 @@
       return '🌋 ' + v + '% — Supernova / Need You Now';
     }
 
-    function updateDriveLevel(who, val) {
+    let driveCommitTimers = { her: null, his: null };
+
+    // Updates UI live while sliding without sending notifications on every % tick
+    function updateDriveLevel(who, val, shouldCommit) {
       const numeric = parseInt(val, 10);
+      if (isNaN(numeric)) return;
+      if (who === 'her') {
+        appState.herDrive = numeric;
+        appState.herDriveValidatedToday = true;
+      } else {
+        appState.hisDrive = numeric;
+      }
+      renderAll();
+      if (shouldCommit === true) {
+        commitDriveLevel(who, numeric);
+      }
+    }
+
+    // Fires only once when the user finishes moving / releases the libido slider
+    function commitDriveLevel(who, val) {
+      if (driveCommitTimers[who]) {
+        clearTimeout(driveCommitTimers[who]);
+        driveCommitTimers[who] = null;
+      }
+      const numeric = parseInt(val, 10);
+      if (isNaN(numeric)) return;
       if (who === 'her') {
         appState.herDrive = numeric;
         appState.herDriveValidatedToday = true;
@@ -1959,7 +1997,9 @@
       if (appState.herDrive >= 70 && appState.hisDrive >= 70) {
         unlockAchievement('ach_spark');
       }
-      saveAndBroadcast((who === 'her' ? appState.herName : appState.hisName) + ' updated live drive to ' + numeric + '%');
+      playSound('tap');
+      const partnerName = who === 'her' ? appState.herName : appState.hisName;
+      saveAndBroadcast(partnerName + ' updated live drive to ' + numeric + '%');
       renderAll();
     }
 
